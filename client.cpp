@@ -68,7 +68,14 @@ bool ConnectedToServer() {
 
 void ShowHelp() {
     //Prints help information when requested by the user.
-    std::cout << "Not yet implemented!" << std::endl;
+    std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "LSMSG\t\t\tLSMSG\t\t\tLists all messages, and clears them from the list." << std::endl;
+    std::cout << "SEND\t\t\tSEND Test message\t\t\tSends a message (currently only to the local server)." << std::endl;
+    std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
+    std::cout << "Q, QUIT, EXIT\t\t\tExits the program." << std::endl << std::endl;
+    
 }
 
 string ConvertToString(vector<char>& Vec) {
