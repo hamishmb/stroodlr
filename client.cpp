@@ -246,6 +246,10 @@ int main(int argc, char* argv[])
             //User has requested that we exit.
             break;
 
+        } else if (splitcommand[0] == "") {
+            //No input, just hit enter key. Print ">>>" again.
+            continue;
+
         } else if (splitcommand[0] == "HELP") {
             ShowHelp();
 
