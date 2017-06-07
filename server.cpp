@@ -27,12 +27,10 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <fcntl.h>
 
-using std::string;
+//Custom includes.
+#include "Tools/tools.h"
 
-void Log_Critical(const char* msg) {
-    std::cout << msg << std::endl;
-    exit(1);
-}
+using std::string;
 
 int fd_is_valid(int fd)
 {

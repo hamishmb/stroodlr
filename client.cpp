@@ -27,33 +27,20 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <chrono>
 
 //Custom headers.
-#include "tools.h"
+#include "Tools/tools.h"
 
 using std::string;
 using std::vector;
 using std::queue;
 using boost::asio::ip::tcp;
 
-//Function declarations.
-string ConvertToString(vector<char>& Vec);
-
 //Locks for the Socket, Out and In message queues to stop different threads from accessing them at the same time.
 std::mutex SocketMtx;
 std::mutex OutMessageQueueMtx;
 std::mutex InMessageQueueMtx;
 
-std::queue<std::vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
-std::queue<std::vector<char> > InMessageQueue;
-
-//Used to tell threads to exit when the program is about to quit.
-bool RequestedExit = false;
-
-void Log_Critical(const char* msg) {
-    //Used to log critical errors and exit the program.
-    std::cout << msg << std::endl;
-    ::RequestedExit = true; //Stop threads.
-    exit(1);
-}
+queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
+queue<vector<char> > InMessageQueue;
 
 void ShowHelp() {
     //Prints help information when requested by the user.
@@ -65,37 +52,6 @@ void ShowHelp() {
     std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
     std::cout << "Q, QUIT, EXIT\t\t\tExits the program." << std::endl << std::endl;
     
-}
-
-string ConvertToString(vector<char>& Vec) {
-    //Converts a vector<char> to a string to make it easy to read and process.
-    std::string tempstring;
-
-    for (int i = 0; i < Vec.size(); i++) {
-        tempstring += Vec[i];
-
-    }
-
-    return tempstring;
-}
-
-vector<char> ConvertToVectorChar(string& Str) {
-    //Converts a string to a vector<char> so it can be put on a message queue.
-    vector<char> tempvec;
-
-    for (int i = 0; i < Str.length(); i++) {
-        tempvec.push_back(Str[i]);
-    }
-
-    return tempvec;
-}
-
-vector<string> split(const string& mystring, string delimiters) {
-    ///Splits a string into a vector<string> with delimiters.
-    std::vector<std::string> splitstring;
-    boost::split(splitstring, mystring, boost::is_any_of(delimiters));
-
-    return splitstring;
 }
 
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]) {
@@ -286,7 +242,7 @@ int main(int argc, char* argv[])
             }
 
             //List all messages.
-            while (!InMessageQueue.empty()) { //*** need to sort out nonblocking reads before this will work properly. ***
+            while (!InMessageQueue.empty()) { //*** Crashes randomly. FIXME ***
                 //Convert each message to a string and then print it.
                 std::cout << std::endl << ConvertToString(InMessageQueue.front()) << std::endl;
                 InMessageQueue.pop();

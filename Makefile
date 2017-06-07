@@ -13,13 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
-all: server client
+all: tools server client
 
-server: server.cpp
-	g++ -std=c++11 server.cpp -o server -lpthread
+tools: Tools/tools.cpp Tools/loggertools.cpp
+	g++ -c -std=c++11 Tools/tools.cpp
+	g++ -c -std=c++11 Tools/loggertools.cpp
 
-client: client.cpp tools.cpp
-	g++ -std=c++11 client.cpp tools.cpp -o client -lpthread -lboost_system
+server: server.cpp Tools/tools.cpp Tools/loggertools.cpp
+	g++ -c -std=c++11 server.cpp
+	g++ -o server tools.o loggertools.o server.o -lpthread -lboost_system
+
+client: client.cpp Tools/tools.cpp Tools/loggertools.cpp
+	g++ -c -std=c++11 client.cpp
+	g++ -o client tools.o loggertools.o client.o -lpthread -lboost_system
 
 clean:
-	-rm -f server client
+	-rm -f server client tools.o loggertools.o server.o client.o
