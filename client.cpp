@@ -24,6 +24,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 #include <string.h>
 #include <thread>
+#include <chrono>
 
 using std::string;
 using std::vector;
@@ -131,8 +132,8 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
             fd_set fileDescriptorSet;
             struct timeval timeStruct;
 
-            //Set the timeout to 5 seconds
-            timeStruct.tv_sec = 5;
+            //Set the timeout to 1 second
+            timeStruct.tv_sec = 1;
             timeStruct.tv_usec = 0;
             FD_ZERO(&fileDescriptorSet);
 
@@ -188,12 +189,15 @@ void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     try {
         while (!::RequestedExit) {
             //Wait until there's something to send in the queue.
-            while (OutMessageQueue.empty());
+            while (OutMessageQueue.empty()) {
+                if (::RequestedExit) {
+                    //Exit.
+                    std::cout << "OutMessageBus Exiting..." << std::endl;
+                    break;
+                }
 
-            if (::RequestedExit) {
-                //Exit.
-                std::cout << "OutMessageBus Exiting..." << std::endl;
-                break;
+                //Wait for 1 second before doing anything.
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
 
             //Write the data.
@@ -237,7 +241,7 @@ int main(int argc, char* argv[])
         //Setup socket.
         SocketPtr = SetupSocket(PortNumber, argv);
 
-    } catch (boost::system::system_error const& e) { //Doesn't seem to catch atm.
+    } catch (boost::system::system_error const& e) { //FIXME: Doesn't seem to catch atm.
         std::cerr << e.what() << std::endl;
     }
 
