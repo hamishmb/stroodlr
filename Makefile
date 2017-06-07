@@ -18,8 +18,8 @@ all: server client
 server: server.cpp
 	g++ -std=c++11 server.cpp -o server -lpthread
 
-client: client.cpp
-	g++ -std=c++11 client.cpp -o client -lpthread -lboost_system
+client: client.cpp tools.cpp
+	g++ -std=c++11 client.cpp tools.cpp -o client -lpthread -lboost_system
 
 clean:
 	-rm -f server client

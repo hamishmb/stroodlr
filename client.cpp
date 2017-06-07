@@ -26,8 +26,12 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <chrono>
 
+//Custom headers.
+#include "tools.h"
+
 using std::string;
 using std::vector;
+using std::queue;
 using boost::asio::ip::tcp;
 
 //Function declarations.
@@ -49,21 +53,6 @@ void Log_Critical(const char* msg) {
     std::cout << msg << std::endl;
     ::RequestedExit = true; //Stop threads.
     exit(1);
-}
-
-bool ConnectedToServer() {
-    //Tests if we're still connected to the local server.
-    if (InMessageQueue.empty()) {
-        return true;
-
-    }
-
-    vector<string> SplitVec;
-    string temp = ConvertToString(InMessageQueue.front());
-    boost::split(SplitVec, temp, boost::algorithm::is_any_of(" ")); //Need to assemble string from queue vec first.
-
-    return (SplitVec[0] != "Error:"); //As long at the message doesn't start with an error, we should be connected.
-
 }
 
 void ShowHelp() {
@@ -269,7 +258,7 @@ int main(int argc, char* argv[])
     std::cout << "For help, type \"HELP\"" << std::endl;
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
-    while (ConnectedToServer()) {
+    while (ConnectedToServer(InMessageQueue)) {
         //Check if there are any messages.
         if (!InMessageQueue.empty()) {
             //Notify user.
