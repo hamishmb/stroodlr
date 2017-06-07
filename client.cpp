@@ -126,11 +126,34 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
 
     try {
         while (!::RequestedExit) {
-            //Read some data.
-            //Currently disabled mutex for reads, as no other thread will try to read at the same time.
-//            SocketMtx.lock(); //This is keeping it locked, because the read hangs. Do an async_read instaed, or something like that.
+            //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
+            //Set up a timed select call, so we can handle timeout cases.
+            fd_set fileDescriptorSet;
+            struct timeval timeStruct;
+
+            //Set the timeout to 5 seconds
+            timeStruct.tv_sec = 5;
+            timeStruct.tv_usec = 0;
+            FD_ZERO(&fileDescriptorSet);
+
+            //We'll need to get the underlying native socket for this select call, in order
+            //to add a simple timeout on the read:
+            int nativeSocket = Socket->native();
+
+            FD_SET(nativeSocket, &fileDescriptorSet);
+
+            //Don't use mutexes here (blocks writing).
+            select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
+
+            if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
+                    //We timed-out. Go back to the start of the loop.
+                    continue;
+            }
+
+            //There must be some data, so read it.
+            SocketMtx.lock();
             Socket->read_some(boost::asio::buffer(MyBuffer), Error);
-//            SocketMtx.unlock();
+            SocketMtx.unlock();
 
             if (Error == boost::asio::error::eof)
                 break; // Connection closed cleanly by peer.
@@ -154,7 +177,7 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
         InMessageQueueMtx.unlock();
     }
-}
+} //*** Causes client: ../nptl/pthread_mutex_lock.c:81: __pthread_mutex_lock: Assertion `mutex->__data.__owner == 0' failed, Aborted. FIXME *** 
 
 void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Runs as a thread and handles outgoing messages to the local server.
@@ -174,10 +197,8 @@ void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
             }
 
             //Write the data.
-            std::cout << "Writing.." << std::endl;
             SocketMtx.lock();
             boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
-            std::cout << "Written.." << std::endl;
             SocketMtx.unlock();
 
             if (Error == boost::asio::error::eof)
