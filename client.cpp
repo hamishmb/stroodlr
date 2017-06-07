@@ -127,9 +127,10 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     try {
         while (!::RequestedExit) {
             //Read some data.
-            SocketMtx.lock(); //This is keeping it locked, because the read hangs. Do an async_read instaed, or something like that.
+            //Currently disabled mutex for reads, as no other thread will try to read at the same time.
+//            SocketMtx.lock(); //This is keeping it locked, because the read hangs. Do an async_read instaed, or something like that.
             Socket->read_some(boost::asio::buffer(MyBuffer), Error);
-            SocketMtx.unlock();
+//            SocketMtx.unlock();
 
             if (Error == boost::asio::error::eof)
                 break; // Connection closed cleanly by peer.
@@ -237,6 +238,12 @@ int main(int argc, char* argv[])
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     while (ConnectedToServer()) {
+        //Check if there are any messages.
+        if (!InMessageQueue.empty()) {
+            //Notify user.
+            std::cout << std::endl << "You have new messages." << std::endl << std::endl;
+        }
+
         std::cout << ">>>";
         getline(std::cin, command);
         splitcommand = split(command, " ");
@@ -250,6 +257,22 @@ int main(int argc, char* argv[])
             //No input, just hit enter key. Print ">>>" again.
             continue;
 
+        } else if (splitcommand[0] == "LSMSG") {
+            //If there are no messages, inform the user.
+            if (InMessageQueue.empty()) {
+                std::cout << "No messages." << std::endl;
+                continue;
+            }
+
+            //List all messages.
+            while (!InMessageQueue.empty()) { //*** need to sort out nonblocking reads before this will work properly. ***
+                //Convert each message to a string and then print it.
+                std::cout << std::endl << ConvertToString(InMessageQueue.front()) << std::endl;
+                InMessageQueue.pop();
+            }
+
+            std::cout << "End of messages." << std::endl << std::endl;
+
         } else if (splitcommand[0] == "HELP") {
             ShowHelp();
 
@@ -257,18 +280,8 @@ int main(int argc, char* argv[])
             //Get the 2nd element and onwards, assemble into a string.
             abouttosend = splitcommand[1]; //Do properly later, handle spaces, maybe make a split function. ***
 
+            //Push it to the message queue.
             OutMessageQueue.push(ConvertToVectorChar(abouttosend));
-            //n = write(sockfd, token, strlen(token));
-
-            if (n < 0) 
-                 Log_Critical("ERROR writing to socket");
-
-            //n = read(sockfd,buffer,255);
-
-            if (n < 0) 
-                 Log_Critical("ERROR reading from socket");
-
-            //std::cout << buffer << std::endl;
 
         } else {
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
