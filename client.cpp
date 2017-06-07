@@ -22,7 +22,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -117,7 +116,7 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* 
     boost::asio::io_service io_service;
 
     tcp::resolver resolver(io_service);
-    tcp::resolver::query query(argv[1], boost::lexical_cast<string>(PortNumber));
+    tcp::resolver::query query(argv[1], std::to_string(PortNumber));
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(io_service));
