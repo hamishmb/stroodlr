@@ -174,8 +174,18 @@ int main(int argc, char* argv[]) {
         Log_Critical("ERROR, no port provided\n");
     }
 
-    //Create the socket and wait until we hve a connection.
-    SocketPtr = SetupSocket(argv[1]);
+    //Handle any errors while setting up the socket.
+    try {
+        //Setup socket.
+        SocketPtr = SetupSocket(argv[1]);
+
+    } catch (boost::system::system_error const& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Exiting..." << std::endl;
+
+        //TODO Handle better later.
+        return 1;
+    }
 
     //We are now connected the the client. Start the handler thread to send messages back and forth.
     std::thread t1(InMessageBus, SocketPtr);

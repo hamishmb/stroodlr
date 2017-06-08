@@ -134,6 +134,7 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
         InMessageQueueMtx.unlock();
     }
+
 } //*** Causes client: ../nptl/pthread_mutex_lock.c:81: __pthread_mutex_lock: Assertion `mutex->__data.__owner == 0' failed, Aborted. FIXME *** 
 
 void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
@@ -197,8 +198,12 @@ int main(int argc, char* argv[])
         //Setup socket.
         SocketPtr = SetupSocket(PortNumber, argv);
 
-    } catch (boost::system::system_error const& e) { //FIXME: Doesn't seem to catch atm. Try boost::exception
-        std::cerr << e.what() << std::endl;
+    } catch (boost::system::system_error const& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Exiting..." << std::endl;
+
+        //TODO Handle better later.
+        return 1;
     }
 
     //Start both message buses.
