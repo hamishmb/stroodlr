@@ -56,7 +56,7 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
     return Socket;
 }
 
-void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
     std::vector<char>* MyBuffer;
     boost::system::error_code Error;
@@ -120,6 +120,50 @@ void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     }
 }
 
+void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+    //Runs as a thread and handles outgoing messages to the local server.
+
+    //Setup.
+    boost::system::error_code Error;
+
+    try {
+        while (!::RequestedExit) {
+            //Wait until there's something to send in the queue.
+            while (OutMessageQueue.empty()) {
+                if (::RequestedExit) {
+                    //Exit.
+                    std::cout << "OutMessageBus Exiting..." << std::endl;
+                    break;
+                }
+
+                //Wait for 1 second before doing anything.
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            }
+
+            //Write the data.
+            SocketMtx.lock();
+            boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
+            SocketMtx.unlock();
+
+            if (Error == boost::asio::error::eof)
+                break; // Connection closed cleanly by peer.
+
+            else if (Error)
+                throw boost::system::system_error(Error); // Some other error.
+
+            //Remove last thing from message queue.
+            OutMessageQueue.pop();      
+        }
+    }
+
+    catch (std::exception& err) {
+        std::cerr << "Error: " << err.what() << std::endl;
+        //InMessageQueueMtx.lock();
+        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
+        //InMessageQueueMtx.unlock();
+    }
+}
+
 int main(int argc, char* argv[]) {
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
 
@@ -131,19 +175,26 @@ int main(int argc, char* argv[]) {
     SocketPtr = SetupSocket(argv[1]);
 
     //We are now connected the the client. Start the handler thread to send messages back and forth.
-    std::thread t1(ClientMessageBus, SocketPtr);
+    std::thread t1(InMessageBus, SocketPtr);
+    std::thread t2(OutMessageBus, SocketPtr);
 
     while (ConnectedToServer(InMessageQueue)) {
         //Check if there are any messages.
         while (!InMessageQueue.empty()) {
             std::cout << "Here is the message: " << ConvertToString(InMessageQueue.front()) << std::endl;
             InMessageQueue.pop();
+            OutMessageQueue.push(ConvertToVectorChar("I got your message"));
         }
 
         //Wait for 1 second before doing anything.
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
+    //Disconnected.
+    std::cout << "Exiting..." << std::endl;
+
     t1.join();
+    t2.join();
+
     return 0;
 }
