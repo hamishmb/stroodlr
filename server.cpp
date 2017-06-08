@@ -26,38 +26,105 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <netinet/in.h>
 #include <thread>
 #include <fcntl.h>
-
+#include <chrono>
+#include <mutex>
+#include <queue>
+#include <vector>
+#include <boost/asio.hpp>
+#include <boost/algorithm/string.hpp>
 //Custom includes.
 #include "Tools/tools.h"
 
 using std::string;
+using std::vector;
+using std::queue;
+using boost::asio::ip::tcp;
+
+//Locks for the Socket, Out and In message queues to stop different threads from accessing them at the same time.
+std::mutex SocketMtx;
+std::mutex OutMessageQueueMtx;
+std::mutex InMessageQueueMtx;
+
+queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
+queue<vector<char> > InMessageQueue;
 
 int fd_is_valid(int fd)
 {
     return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
 
-void ClientMessageBus(int SocketFD) {
-    char buffer[256]; //Holds messages up to 255 chars from client.
-    int n; //Used to hold no. of chars read/written.
+std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
+    //Sets up the socket for us, and returns a shared pointer to it.
+    std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
+
+    boost::asio::io_service io_service;
+    tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), std::stoi(PortNumber)));
+
+    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(io_service));
+
+    //Wait for a connection.
+    acceptor.accept(*Socket);
+
+    return Socket;
+}
+
+void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+    //Setup.
+    std::vector<char> MyBuffer(128);
+    boost::system::error_code Error;
 
     try {
-        while (fd_is_valid(SocketFD)) {
-            bzero(buffer,256); //Zero out our buffer to hold incoming message data.
+        while (!::RequestedExit) {
+            //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
+            //Set up a timed select call, so we can handle timeout cases.
+            fd_set fileDescriptorSet;
+            struct timeval timeStruct;
 
-            n = read(SocketFD,buffer,255);
+            //Set the timeout to 1 second
+            timeStruct.tv_sec = 1;
+            timeStruct.tv_usec = 0;
+            FD_ZERO(&fileDescriptorSet);
 
-            if (n < 0) Log_Critical("ERROR reading from socket");
+            //We'll need to get the underlying native socket for this select call, in order
+            //to add a simple timeout on the read:
+            int nativeSocket = Socket->native();
 
-            std::cout << "Here is the message: " << buffer << std::endl;
+            FD_SET(nativeSocket, &fileDescriptorSet);
 
-            n = write(SocketFD,"I got your message",18);
+            //Don't use mutexes here (blocks writing).
+            select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
 
-            if (n < 0) Log_Critical("ERROR writing to socket");
+            if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
+                    //We timed-out. Go back to the start of the loop.
+                    continue;
+            }
+
+            //There must be some data, so read it.
+            SocketMtx.lock();
+            Socket->read_some(boost::asio::buffer(MyBuffer), Error);
+            SocketMtx.unlock();
+
+            if (Error == boost::asio::error::eof)
+                break; // Connection closed cleanly by peer.
+
+            else if (Error)
+                throw boost::system::system_error(Error); // Some other error.
+
+            //Push to the message queue.
+            InMessageQueueMtx.lock(); //Lock the mutex.
+            InMessageQueue.push(MyBuffer);
+            InMessageQueueMtx.unlock();
+
+            //Clear buffer.
+            MyBuffer.clear();        
         }
     }
-    catch (...) {
-        std::cout << "Caught error :P" << std::endl;
+
+    catch (std::exception& err) {
+        std::cerr << "Error: " << err.what() << std::endl;
+        InMessageQueueMtx.lock();
+        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
+        InMessageQueueMtx.unlock();
     }
 }
 
@@ -66,45 +133,28 @@ int main(int argc, char* argv[]) {
     socklen_t clilen; //Holds size of client address.
     struct sockaddr_in serv_addr, cli_addr;
 
+    std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+
     if (argc < 2) {
         Log_Critical("ERROR, no port provided\n");
     }
 
-    //Get a socket file descriptor (TCP).
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    //Check we could open the socket.
-    if (sockfd < 0) 
-        Log_Critical("ERROR opening socket");
-
-    //Initialise serv_addr to hold 0s.
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-
-    //Convert port number to int.
-    portno = atoi(argv[1]);
-
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-
-    serv_addr.sin_port = htons(portno); //Convert port number to network byte order.
-
-    //Attempt to bind the socket to the server address.
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        Log_Critical("ERROR on binding");
-    }
-
-    listen(sockfd,5); //Listen for incoming connections on sockfd.
-
-    clilen = sizeof(cli_addr);
-
-    newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen); //Create a new socket file descriptor and accept the connection.
-
-    if (newsockfd < 0) {
-        Log_Critical("ERROR on accept");
-    }
+    //Create the socket and wait until we hve a connection.
+    SocketPtr = SetupSocket(argv[1]);
 
     //We are now connected the the client. Start the handler thread to send messages back and forth.
-    std::thread t1(ClientMessageBus, newsockfd);
+    std::thread t1(ClientMessageBus, SocketPtr);
+
+    while (ConnectedToServer(InMessageQueue)) {
+        //Check if there are any messages.
+        while (!InMessageQueue.empty()) {
+                std::cout << std::endl << ConvertToString(InMessageQueue.front()) << std::endl;
+                InMessageQueue.pop();
+        }
+
+        //Wait for 1 second before doing anything.
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 
     t1.join();
     return 0;
