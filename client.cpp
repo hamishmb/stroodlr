@@ -261,8 +261,8 @@ int main(int argc, char* argv[])
             //Get the 2nd element and onwards, assemble into a string.
             abouttosend = splitcommand[1]; //Do properly later, handle spaces, maybe make a split function. ***
 
-            //Push it to the message queue.
-            OutMessageQueue.push(ConvertToVectorChar(abouttosend));
+            //Send it.
+            SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
 
         } else {
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;

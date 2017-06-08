@@ -41,6 +41,9 @@ std::mutex InMessageQueueMtx;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
+//Options. TODO use cmdline flags to set.
+bool Debug = true;
+
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
@@ -181,9 +184,13 @@ int main(int argc, char* argv[]) {
     while (ConnectedToServer(InMessageQueue)) {
         //Check if there are any messages.
         while (!InMessageQueue.empty()) {
-            std::cout << "Here is the message: " << ConvertToString(InMessageQueue.front()) << std::endl;
+            if (Debug) {
+                std::cout << "Message from local client: " << ConvertToString(InMessageQueue.front()) << std::endl;
+            }
+
             InMessageQueue.pop();
-            OutMessageQueue.push(ConvertToVectorChar("I got your message"));
+
+            OutMessageQueue.push(ConvertToVectorChar("ACK"));
         }
 
         //Wait for 1 second before doing anything.
@@ -192,6 +199,8 @@ int main(int argc, char* argv[]) {
 
     //Disconnected.
     std::cout << "Exiting..." << std::endl;
+
+    RequestedExit = true;
 
     t1.join();
     t2.join();
