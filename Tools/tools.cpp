@@ -44,7 +44,7 @@ bool ConnectedToServer(queue<vector<char> >& InMessageQueue) {
 
 }
 
-string ConvertToString(vector<char>& Vec) {
+string ConvertToString(vector<char> Vec) {
     //Converts a vector<char> to a string to make it easy to read and process.
     std::string tempstring;
 
@@ -56,7 +56,7 @@ string ConvertToString(vector<char>& Vec) {
     return tempstring;
 }
 
-vector<char> ConvertToVectorChar(string& Str) {
+vector<char> ConvertToVectorChar(string Str) {
     //Converts a string to a vector<char> so it can be put on a message queue.
     vector<char> tempvec;
 

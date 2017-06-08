@@ -70,11 +70,14 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
 
 void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
-    std::vector<char> MyBuffer(128);
+    std::vector<char>* MyBuffer;
     boost::system::error_code Error;
 
     try {
         while (!::RequestedExit) {
+            //Delete vector each time, for some reason fixed empty reads.
+            MyBuffer = new std::vector<char> (128);
+
             //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
             //Set up a timed select call, so we can handle timeout cases.
             fd_set fileDescriptorSet;
@@ -95,13 +98,13 @@ void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
             select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
 
             if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
-                    //We timed-out. Go back to the start of the loop.
-                    continue;
+                //We timed-out. Go back to the start of the loop.
+                continue;
             }
 
             //There must be some data, so read it.
             SocketMtx.lock();
-            Socket->read_some(boost::asio::buffer(MyBuffer), Error);
+            Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
             SocketMtx.unlock();
 
             if (Error == boost::asio::error::eof)
@@ -112,11 +115,12 @@ void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
 
             //Push to the message queue.
             InMessageQueueMtx.lock(); //Lock the mutex.
-            InMessageQueue.push(MyBuffer);
+            InMessageQueue.push(*MyBuffer);
             InMessageQueueMtx.unlock();
 
             //Clear buffer.
-            MyBuffer.clear();        
+            MyBuffer->clear();
+            delete MyBuffer;
         }
     }
 
@@ -133,6 +137,22 @@ int main(int argc, char* argv[]) {
     socklen_t clilen; //Holds size of client address.
     struct sockaddr_in serv_addr, cli_addr;
 
+    std::queue<int> MyQueue;
+    string tmpstr;
+
+    for (int i = 0; i < 100; i++) {
+        MyQueue.push(i);
+    }
+
+    std::cout << MyQueue.size() << std::endl;
+    std::cout << MyQueue.empty() << std::endl;
+
+    while (false) {
+        std::cout << std::endl << MyQueue.front() << std::endl;
+        MyQueue.pop();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
 
     if (argc < 2) {
@@ -148,8 +168,8 @@ int main(int argc, char* argv[]) {
     while (ConnectedToServer(InMessageQueue)) {
         //Check if there are any messages.
         while (!InMessageQueue.empty()) {
-                std::cout << std::endl << ConvertToString(InMessageQueue.front()) << std::endl;
-                InMessageQueue.pop();
+            std::cout << "Here is the message: " << ConvertToString(InMessageQueue.front()) << std::endl;
+            InMessageQueue.pop();
         }
 
         //Wait for 1 second before doing anything.

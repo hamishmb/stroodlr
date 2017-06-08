@@ -74,11 +74,14 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Runs as a thread and handles incoming messages from the local server.
 
     //Setup.
-    std::vector<char> MyBuffer(128);
+    std::vector<char>* MyBuffer;
     boost::system::error_code Error;
 
     try {
         while (!::RequestedExit) {
+            //Delete vector each time, for some reason fixed empty reads.
+            MyBuffer = new std::vector<char> (128);
+
             //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
             //Set up a timed select call, so we can handle timeout cases.
             fd_set fileDescriptorSet;
@@ -105,7 +108,7 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
 
             //There must be some data, so read it.
             SocketMtx.lock();
-            Socket->read_some(boost::asio::buffer(MyBuffer), Error);
+            Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
             SocketMtx.unlock();
 
             if (Error == boost::asio::error::eof)
@@ -116,11 +119,12 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
 
             //Push to the message queue.
             InMessageQueueMtx.lock(); //Lock the mutex.
-            InMessageQueue.push(MyBuffer);
+            InMessageQueue.push(*MyBuffer);
             InMessageQueueMtx.unlock();
 
             //Clear buffer.
-            MyBuffer.clear();        
+            MyBuffer->clear();
+            delete MyBuffer;
         }
     }
 
@@ -193,7 +197,7 @@ int main(int argc, char* argv[])
         //Setup socket.
         SocketPtr = SetupSocket(PortNumber, argv);
 
-    } catch (boost::system::system_error const& e) { //FIXME: Doesn't seem to catch atm.
+    } catch (boost::system::system_error const& e) { //FIXME: Doesn't seem to catch atm. Try boost::exception
         std::cerr << e.what() << std::endl;
     }
 

@@ -24,8 +24,8 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 //Function prototypes.
 bool ConnectedToServer(std::queue<std::vector<char> >& InMessageQueue);
-std::string ConvertToString(std::vector<char>& Vec);
-std::vector<char> ConvertToVectorChar(std::string& Str);
+std::string ConvertToString(std::vector<char> Vec);
+std::vector<char> ConvertToVectorChar(std::string Str);
 std::vector<std::string> split(const std::string& mystring, std::string delimiters);
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]);
 void Log_Critical(const char* msg);
