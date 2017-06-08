@@ -17,21 +17,14 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <string>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <thread>
-#include <fcntl.h>
 #include <chrono>
 #include <mutex>
 #include <queue>
 #include <vector>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
+
 //Custom includes.
 #include "Tools/tools.h"
 
@@ -47,11 +40,6 @@ std::mutex InMessageQueueMtx;
 
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
-
-int fd_is_valid(int fd)
-{
-    return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
-}
 
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
@@ -133,26 +121,6 @@ void ClientMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
 }
 
 int main(int argc, char* argv[]) {
-    int sockfd, newsockfd, portno; //Socket file descriptors, and the port number.
-    socklen_t clilen; //Holds size of client address.
-    struct sockaddr_in serv_addr, cli_addr;
-
-    std::queue<int> MyQueue;
-    string tmpstr;
-
-    for (int i = 0; i < 100; i++) {
-        MyQueue.push(i);
-    }
-
-    std::cout << MyQueue.size() << std::endl;
-    std::cout << MyQueue.empty() << std::endl;
-
-    while (false) {
-        std::cout << std::endl << MyQueue.front() << std::endl;
-        MyQueue.pop();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
 
     if (argc < 2) {
