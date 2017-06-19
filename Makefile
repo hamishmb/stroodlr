@@ -21,11 +21,11 @@ tools: Tools/tools.cpp Tools/loggertools.cpp
 
 server: server.cpp Tools/tools.cpp Tools/loggertools.cpp
 	g++ -c -std=c++11 server.cpp
-	g++ -o server tools.o loggertools.o server.o -lpthread -lboost_system
+	g++ -o server tools.o loggertools.o server.o -pthread -lboost_system
 
 client: client.cpp Tools/tools.cpp Tools/loggertools.cpp
 	g++ -c -std=c++11 client.cpp
-	g++ tools.o loggertools.o client.o -o client -lpthread -lboost_system
+	g++ -o client tools.o loggertools.o client.o -pthread -lboost_system
 
 clean:
 	-rm -f server client tools.o loggertools.o server.o client.o

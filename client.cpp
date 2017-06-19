@@ -73,7 +73,7 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* 
     return Socket;
 }
 
-void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+int InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Runs as a thread and handles incoming messages from the local server.
 
     //Setup.
@@ -105,8 +105,8 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
             select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
 
             if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
-                    //We timed-out. Go back to the start of the loop.
-                    continue;
+                //We timed-out. Go back to the start of the loop.
+                continue;
             }
 
             //There must be some data, so read it.
@@ -138,9 +138,12 @@ void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
         InMessageQueueMtx.unlock();
     }
 
-} //*** Causes client: ../nptl/pthread_mutex_lock.c:81: __pthread_mutex_lock: Assertion `mutex->__data.__owner == 0' failed, Aborted. FIXME *** 
+    std::cout << "InMessageBus Exiting..." << std::endl;
+    return 0;
 
-void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+}
+
+int OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Runs as a thread and handles outgoing messages to the local server.
 
     //Setup.
@@ -172,7 +175,9 @@ void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
                 throw boost::system::system_error(Error); // Some other error.
 
             //Remove last thing from message queue.
-            OutMessageQueue.pop();      
+            OutMessageQueueMtx.lock();
+            OutMessageQueue.pop();
+            OutMessageQueueMtx.unlock();  
         }
     }
 
@@ -182,6 +187,8 @@ void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
         //InMessageQueueMtx.unlock();
     }
+
+    return 0;
 }
 
 int main(int argc, char* argv[])
@@ -257,7 +264,7 @@ int main(int argc, char* argv[])
             }
 
             //List all messages.
-            while (!InMessageQueue.empty()) { //*** Crashes randomly. FIXME ***
+            while (!InMessageQueue.empty()) {
                 //Convert each message to a string and then print it.
                 std::cout << std::endl << ConvertToString(InMessageQueue.front()) << std::endl;
                 InMessageQueue.pop();
@@ -270,7 +277,7 @@ int main(int argc, char* argv[])
 
         } else if (splitcommand[0] == "SEND") {
             //Get the 2nd element and onwards, assemble into a string.
-            abouttosend = splitcommand[1]; //Do properly later, handle spaces, maybe make a split function. ***
+            abouttosend = splitcommand[1]; //Do properly later, handle spaces, maybe make another split function. ***
 
             //Send it.
             SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
@@ -283,7 +290,20 @@ int main(int argc, char* argv[])
     //Exit if we broke out of the loop.
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
+
     t1.join();
+    std::cout << "InMessageBus Exited." << std::endl;
+
     t2.join();
+    std::cout << "OutMessageBus Exited." << std::endl;
+
+    //Unlock all mutexes just in case.
+    std::cout << "Unlocking mutexes..." << std::endl;
+    SocketMtx.unlock();
+    OutMessageQueueMtx.unlock();
+    InMessageQueueMtx.unlock();
+
+    std::cout << "Exiting..." << std::endl;
+
     return 0;
 }
