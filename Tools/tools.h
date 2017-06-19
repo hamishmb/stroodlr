@@ -36,21 +36,42 @@ void Log_Critical(const char* msg);
 //Class definitions.
 class Logging {
 public:
+    //Default constuctor.
     Logging() : Name("") {}
 
+    //Setup functions.
     void SetName(std::string LoggerName);
     void SetDateTimeFormat(std::string Format);
     void SetFileName(std::string FileName);
     void SetStyle(std::string Style);
 
-    void GetName();
+    //Config getter functions.
+    std::string GetName();
+    std::string GetDateTimeFormat();
+    std::string GetFileName();
+    std::string GetStyle();
+
+    //Logging functions.
+    bool Debug(std::string Message);
+    bool Info(std::string Message);
+    bool Warning(std::string Message);
+    bool Error(std::string Message);
+    bool ErrorWCerr(std::string Message);
+    bool Critical(std::string Message);
+    bool CriticalWCerr(std::string Message);
 
 private:
+    //Variables.
     std::string Name;
     std::string DateTimeFormat;
+    char TempTimeHolder[256];
     std::string File;
     std::ofstream FileHandle;
     std::string MessageStyle;
+
+    //Private function declarations.
+    void GetTime();
+    std::string FormatMessage(std::string OrigMessage, std::string Level);
 };
 
 //Global data.

@@ -19,11 +19,15 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <ctime>
 #include "tools.h"
 
 using std::string;
+using std::vector;
 
 //Define the Logging class's functions.
+//---------- Setup functions ----------
 void Logging::SetName(string LoggerName) {
     Name = LoggerName;
 }
@@ -45,6 +49,110 @@ void Logging::SetStyle(string Style) {
     MessageStyle = Style;
 }
 
+//---------- Config Getting functions ----------
+string Logging::GetName() {
+    return Name;
+}
+
+string Logging::GetDateTimeFormat() {
+    return DateTimeFormat;
+}
+
+string Logging::GetFileName() {
+    //Do *NOT* return the file handle, to avoid threading issues/race conditions.
+    return File;
+}
+
+string Logging::GetStyle() {
+    return MessageStyle;
+}
+
+//---------- Private Functions ----------
+void Logging::GetTime() {
+    time_t CurrentTime = time(NULL);
+    tm* PToTMStruct = localtime(&CurrentTime);
+
+    strftime(TempTimeHolder, 256, DateTimeFormat.c_str(), PToTMStruct);
+}
+
+string Logging::FormatMessage(string OrigMessage, string Level) {
+    string Message;
+    vector<string> SplitStyle;
+
+    SplitStyle = split(MessageStyle, " ");
+
+    for (int i = 0; i < SplitStyle.size(); i++) {
+        if (SplitStyle[i] == "Time") {
+            GetTime();
+            Message = Message + static_cast<string>(TempTimeHolder);
+
+        } else if (SplitStyle[i] == "Name") {
+            Message = Message + Name;
+
+        } else if (SplitStyle[i] == "Level") {
+            Message = Message + Level;
+
+        }
+
+        //Add the correct separator.
+        if (SplitStyle[i] == SplitStyle.back()) {
+            //We are at the last bit of the message, except for the actuall message text, so add a ": ".
+            Message = Message + ": ";
+
+        } else {
+            //Not at the last element.
+            Message = Message + " - ";
+
+        }
+    }
+
+    return Message;
+
+}
+
+//---------- Logging Functions TODO ----------
+bool Logging::Debug(string Message) {
+    FileHandle << FormatMessage(Message, "DEBUG") << std::endl;
+    return FileHandle.good();
+}
+
+bool Logging::Info(string Message) {
+    FileHandle << FormatMessage(Message, "INFO") << std::endl;
+    return FileHandle.good();
+}
+
+bool Logging::Warning(string Message) {
+    FileHandle << FormatMessage(Message, "WARNING") << std::endl;
+    return FileHandle.good();
+}
+
+bool Logging::Error(string Message) {
+    FileHandle << FormatMessage(Message, "ERROR") << std::endl;
+    return FileHandle.good();
+}
+
+bool Logging::ErrorWCerr(string Message) {
+    string AboutToWrite;
+    AboutToWrite = FormatMessage(Message, "ERROR");
+    std::cerr << AboutToWrite << std::endl;
+    FileHandle << AboutToWrite << std::endl;
+    return FileHandle.good();
+}
+
+bool Logging::Critical(string Message) {
+    FileHandle << FormatMessage(Message, "CRITICAL") << std::endl;
+    return FileHandle.good();
+}
+
+bool Logging::CriticalWCerr(string Message) {
+    string AboutToWrite;
+    AboutToWrite = FormatMessage(Message, "CRITICAL");
+    std::cerr << AboutToWrite << std::endl;
+    FileHandle << AboutToWrite << std::endl;
+    return FileHandle.good();
+}
+
+//DEPRECATED.
 void Log_Critical(const char* msg) {
     //Used to log critical errors and exit the program.
     std::cout << msg << std::endl;
