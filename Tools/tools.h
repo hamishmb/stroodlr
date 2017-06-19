@@ -16,6 +16,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //Includes.
+#include <fstream>
 #include <string>
 #include <queue>
 #include <vector>
@@ -38,9 +39,18 @@ public:
     Logging() : Name("") {}
 
     void SetName(std::string LoggerName);
+    void SetDateTimeFormat(std::string Format);
+    void SetFileName(std::string FileName);
+    void SetStyle(std::string Style);
+
+    void GetName();
 
 private:
     std::string Name;
+    std::string DateTimeFormat;
+    std::string File;
+    std::ofstream FileHandle;
+    std::string MessageStyle;
 };
 
 //Global data.
