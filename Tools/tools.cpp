@@ -31,6 +31,10 @@ using std::queue;
 //Shared globally. Used to tell threads to exit when the program is about to quit.
 bool RequestedExit = false;
 
+//Global.
+string Version = "0.9";
+string ReleaseDate = "19/6/2017";
+
 bool ConnectedToServer(queue<vector<char> >& InMessageQueue) {
     //Tests if we're still connected to the local server.
     if (InMessageQueue.empty()) {

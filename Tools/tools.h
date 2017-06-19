@@ -32,5 +32,18 @@ std::vector<std::string> split(const std::string& mystring, std::string delimite
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]);
 void Log_Critical(const char* msg);
 
+//Class definitions.
+class Logging {
+public:
+    Logging() : Name("") {}
+
+    void SetName(std::string LoggerName);
+
+private:
+    std::string Name;
+};
+
 //Global data.
 extern bool RequestedExit;
+extern std::string Version;
+extern std::string ReleaseDate;

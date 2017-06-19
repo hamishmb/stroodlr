@@ -14,12 +14,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 //*** More will be added here later ***
 
 #include <iostream>
-
+#include <string>
 #include "tools.h"
+
+using std::string;
+
+//Define the Logging class's functions.
+void Logging::SetName(string LoggerName) {
+    Name = LoggerName;
+}
+
+//void Setup(
 
 void Log_Critical(const char* msg) {
     //Used to log critical errors and exit the program.

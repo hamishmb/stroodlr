@@ -34,6 +34,9 @@ using std::vector;
 using std::queue;
 using boost::asio::ip::tcp;
 
+//Logger.
+Logging Logger;
+
 //Locks for the Socket, Out and In message queues to stop different threads from accessing them at the same time.
 std::mutex SocketMtx;
 std::mutex OutMessageQueueMtx;
@@ -186,6 +189,9 @@ int main(int argc, char* argv[])
     //Setup.
     int PortNumber = 50000;
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+
+    //Setup the logger.
+    Logger.SetName("Stroodlr Client "+Version);
 
     //Error if we haven't been given a hostname or IP.
     if (argc != 2) {
