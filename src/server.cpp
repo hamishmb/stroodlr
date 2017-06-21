@@ -17,10 +17,9 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <string>
-#include <thread>
 #include <chrono>
-#include <mutex>
 #include <queue>
+#include <thread>
 #include <vector>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
@@ -32,11 +31,6 @@ using std::string;
 using std::vector;
 using std::queue;
 using boost::asio::ip::tcp;
-
-//Locks for the Socket, Out and In message queues to stop different threads from accessing them at the same time.
-std::mutex SocketMtx;
-std::mutex OutMessageQueueMtx;
-std::mutex InMessageQueueMtx;
 
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
@@ -59,111 +53,86 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
     return Socket;
 }
 
-void InMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
     std::vector<char>* MyBuffer;
     boost::system::error_code Error;
 
     try {
-        while (!::RequestedExit) {
-            //Delete vector each time, for some reason fixed empty reads.
-            MyBuffer = new std::vector<char> (128);
+        //Delete vector each time, for some reason fixed empty reads.
+        MyBuffer = new std::vector<char> (128);
 
-            //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
-            //Set up a timed select call, so we can handle timeout cases.
-            fd_set fileDescriptorSet;
-            struct timeval timeStruct;
+        //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
+        //Set up a timed select call, so we can handle timeout cases.
+        fd_set fileDescriptorSet;
+        struct timeval timeStruct;
 
-            //Set the timeout to 1 second
-            timeStruct.tv_sec = 1;
-            timeStruct.tv_usec = 0;
-            FD_ZERO(&fileDescriptorSet);
+        //Set the timeout to 1 second
+        timeStruct.tv_sec = 1;
+        timeStruct.tv_usec = 0;
+        FD_ZERO(&fileDescriptorSet);
 
-            //We'll need to get the underlying native socket for this select call, in order
-            //to add a simple timeout on the read:
-            int nativeSocket = Socket->native();
+        //We'll need to get the underlying native socket for this select call, in order
+        //to add a simple timeout on the read:
+        int nativeSocket = Socket->native();
 
-            FD_SET(nativeSocket, &fileDescriptorSet);
+        FD_SET(nativeSocket, &fileDescriptorSet);
 
-            //Don't use mutexes here (blocks writing).
-            select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
+        //Don't use mutexes here (blocks writing).
+        select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
 
-            if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
-                //We timed-out. Go back to the start of the loop.
-                continue;
-            }
-
-            //There must be some data, so read it.
-            SocketMtx.lock();
-            Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
-            SocketMtx.unlock();
-
-            if (Error == boost::asio::error::eof)
-                break; // Connection closed cleanly by peer.
-
-            else if (Error)
-                throw boost::system::system_error(Error); // Some other error.
-
-            //Push to the message queue.
-            InMessageQueueMtx.lock(); //Lock the mutex.
-            InMessageQueue.push(*MyBuffer);
-            InMessageQueueMtx.unlock();
-
-            //Clear buffer.
-            MyBuffer->clear();
-            delete MyBuffer;
+        if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
+            //We timed-out. Return.
+            return;
         }
-    }
 
-    catch (std::exception& err) {
+        //There must be some data, so read it.
+        Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
+
+        if (Error == boost::asio::error::eof)
+            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+
+        else if (Error)
+            throw boost::system::system_error(Error); // Some other error.
+
+        //Push to the message queue.
+        InMessageQueue.push(*MyBuffer);
+
+        //Clear buffer.
+        MyBuffer->clear();
+        delete MyBuffer;
+
+    } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
-        InMessageQueueMtx.lock();
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
-        InMessageQueueMtx.unlock();
     }
 }
 
-void OutMessageBus(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
-    //Runs as a thread and handles outgoing messages to the local server.
-
+void SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
     boost::system::error_code Error;
 
     try {
-        while (!::RequestedExit) {
-            //Wait until there's something to send in the queue.
-            while (OutMessageQueue.empty()) {
-                if (::RequestedExit) {
-                    //Exit.
-                    std::cout << "OutMessageBus Exiting..." << std::endl;
-                    break;
-                }
-
-                //Wait for 1 second before doing anything.
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            }
-
-            //Write the data.
-            SocketMtx.lock();
-            boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
-            SocketMtx.unlock();
-
-            if (Error == boost::asio::error::eof)
-                break; // Connection closed cleanly by peer.
-
-            else if (Error)
-                throw boost::system::system_error(Error); // Some other error.
-
-            //Remove last thing from message queue.
-            OutMessageQueue.pop();      
+        //Exit if there's nothing to send.
+        if (OutMessageQueue.empty()) {
+            return;
         }
-    }
 
-    catch (std::exception& err) {
+        //Write the data.
+        boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
+
+        if (Error == boost::asio::error::eof)
+            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+
+        else if (Error)
+            throw boost::system::system_error(Error); // Some other error.
+
+        //Remove last thing from message queue.
+        OutMessageQueue.pop();
+
+    } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueueMtx.lock();
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
-        //InMessageQueueMtx.unlock();
     }
 }
 
@@ -187,11 +156,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    //We are now connected the the client. Start the handler thread to send messages back and forth.
-    std::thread t1(InMessageBus, SocketPtr);
-    std::thread t2(OutMessageBus, SocketPtr);
+    while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
+        //Receive mesages if there are any.
+        AttemptToReadFromSocket(SocketPtr);
 
-    while (ConnectedToServer(InMessageQueue)) {
         //Check if there are any messages.
         while (!InMessageQueue.empty()) {
             if (Debug) {
@@ -201,7 +169,7 @@ int main(int argc, char* argv[]) {
             OutMessageQueue.push(ConvertToVectorChar("ACK"));
 
             //If the message was "Bye!", close the socket and make a new one.
-            if (ConvertToString(InMessageQueue.front()) == "Bye!") {
+            if (true) {
                 //Give the output thread time to write the message.
                 std::cout << "Client gone. Closing socket..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -215,8 +183,6 @@ int main(int argc, char* argv[]) {
 
                 RequestedExit = true;
 
-                t1.join();
-                t2.join();
                 SocketPtr = nullptr;
 
                 //Handle any errors while setting up the socket.
@@ -233,9 +199,6 @@ int main(int argc, char* argv[]) {
                 }
 
                 //We are now connected the the client. Start the handler thread to send messages back and forth.
-                std::thread t1(InMessageBus, SocketPtr);
-                std::thread t2(OutMessageBus, SocketPtr);
-
                 std::cout << "Restarted." << std::endl;
 
             }
@@ -243,6 +206,9 @@ int main(int argc, char* argv[]) {
             InMessageQueue.pop();
 
         }
+
+        //Send any pending messages.
+        SendAnyPendingMessages(SocketPtr);
 
         //Wait for 1 second before doing anything.
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -252,9 +218,6 @@ int main(int argc, char* argv[]) {
     std::cout << "Exiting..." << std::endl;
 
     RequestedExit = true;
-
-    t1.join();
-    t2.join();
 
     return 0;
 }
