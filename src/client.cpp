@@ -39,8 +39,6 @@ Logging Logger;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
-bool WaitingForACK = false;
-
 void ShowHelp() {
     //Prints help information when requested by the user.
     std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
@@ -51,11 +49,6 @@ void ShowHelp() {
     std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
     std::cout << "Q, QUIT, EXIT\t\t\tExits the program." << std::endl << std::endl;
     
-}
-
-void WaitForACK() {
-    while (WaitingForACK) std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
 }
 
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]) {
@@ -178,18 +171,6 @@ void MessageBus(char* argv[]) {
         //Receive messages if there are any.
         AttemptToReadFromSocket(SocketPtr);
 
-        //If waiting for an acknowledgement, keep checking.
-        if (Sent) {
-            WaitingForACK = true;
-            while (InMessageQueue.empty()) {
-                AttemptToReadFromSocket(SocketPtr);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-            }
-            InMessageQueue.pop(); //What if this isn't an ACK?
-            WaitingForACK = false;
-            std::cout << std::endl << std::endl << "Received ACK from local server" << std::endl << std::endl;
-        }
     }
 }
 
@@ -209,10 +190,6 @@ int main(int argc, char* argv[])
     string command;
     vector<string> splitcommand;
     string abouttosend;
-    int n = 0;
-    char *token;
-    char *strtok_saveptr;
-    bool WaitingForACK = false;
 
     //Greet user and start waiting for commands.
     //Display greeting.
@@ -264,10 +241,7 @@ int main(int argc, char* argv[])
             abouttosend = splitcommand[1]; //Do properly later, handle spaces, maybe make another split function. ***
 
             //Send it.
-            //SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
-            //Push it to the message queue.
-            OutMessageQueue.push(ConvertToVectorChar(abouttosend));
-            WaitForACK();
+            SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
 
         } else {
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
@@ -275,22 +249,13 @@ int main(int argc, char* argv[])
     }
 
     //Say goodbye to server.
-    OutMessageQueue.push(ConvertToVectorChar("Bye!"));
-    WaitForACK();
+    SendToServer(ConvertToVectorChar("Bye!"), InMessageQueue, OutMessageQueue);
 
     //Exit if we broke out of the loop.
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
 
     t1.join();
-
-    //Close socket.
-    boost::system::error_code ec;
-
-    //SocketPtr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-    //SocketPtr->close(ec);
-
-    //SocketPtr = nullptr;
 
     std::cout << "Exiting..." << std::endl;
 

@@ -35,7 +35,7 @@ bool RequestedExit = false;
 string Version = "0.9";
 string ReleaseDate = "19/6/2017";
 
-bool ConnectedToServer(queue<vector<char> >& InMessageQueue) {
+bool ConnectedToServer(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.
     if (InMessageQueue.empty()) {
         return true;

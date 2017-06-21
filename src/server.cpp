@@ -162,14 +162,12 @@ int main(int argc, char* argv[]) {
             OutMessageQueue.push(ConvertToVectorChar("ACK"));
 
             //If the message was "Bye!", close the socket and make a new one.
-            if (false) {
+            if (strcmp(ConvertToString(InMessageQueue.front()).c_str(), "Bye!") == 0) {
                 //Give the output thread time to write the message.
+                //Send any pending messages.
+                SendAnyPendingMessages(SocketPtr);
                 std::cout << "Client gone. Making a new socket..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-                boost::system::error_code ec;
-
-                SocketPtr->close(ec);
 
                 //Handle any errors while setting up the socket.
                 try {
