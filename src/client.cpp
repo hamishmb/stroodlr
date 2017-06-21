@@ -39,6 +39,8 @@ Logging Logger;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
+bool WaitingForACK = false;
+
 void ShowHelp() {
     //Prints help information when requested by the user.
     std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
@@ -49,6 +51,11 @@ void ShowHelp() {
     std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
     std::cout << "Q, QUIT, EXIT\t\t\tExits the program." << std::endl << std::endl;
     
+}
+
+void WaitForACK() {
+    while (WaitingForACK) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
 }
 
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]) {
@@ -115,21 +122,21 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
     }
 }
 
-void SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
+int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
     boost::system::error_code Error;
 
     try {
         //Wait until there's something to send in the queue.
         if (OutMessageQueue.empty()) {
-            return;
+            return false;
         }
 
         //Write the data.
         boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
 
         if (Error == boost::asio::error::eof)
-            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+            return false; // Connection closed cleanly by peer. *** HANDLE BETTER ***
 
         else if (Error)
             throw boost::system::system_error(Error); // Some other error.
@@ -141,22 +148,15 @@ void SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket
         std::cerr << "Error: " << err.what() << std::endl;
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
     }
+
+    return true;
 }
 
-int main(int argc, char* argv[])
-{
+void MessageBus(char* argv[]) {
     //Setup.
+    bool Sent = false;
     int PortNumber = 50000;
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-
-    //Setup the logger.
-    Logger.SetName("Stroodlr Client "+Version);
-
-    //Error if we haven't been given a hostname or IP.
-    if (argc != 2) {
-        std::cerr << "Usage: client <host>" << std::endl;
-        return 1;
-    }
 
     //Handle any errors while setting up the socket.
     try {
@@ -168,8 +168,43 @@ int main(int argc, char* argv[])
         std::cerr << "Exiting..." << std::endl;
 
         //TODO Handle better later.
+        return;
+    }
+
+    while (!::RequestedExit) {
+        //Send any pending messages.
+        Sent = SendAnyPendingMessages(SocketPtr);
+
+        //Receive messages if there are any.
+        AttemptToReadFromSocket(SocketPtr);
+
+        //If waiting for an acknowledgement, keep checking.
+        if (Sent) {
+            WaitingForACK = true;
+            while (InMessageQueue.empty()) {
+                AttemptToReadFromSocket(SocketPtr);
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            }
+            InMessageQueue.pop(); //What if this isn't an ACK?
+            WaitingForACK = false;
+            std::cout << std::endl << std::endl << "Received ACK from local server" << std::endl << std::endl;
+        }
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    //Setup the logger.
+    Logger.SetName("Stroodlr Client "+Version);
+
+    //Error if we haven't been given a hostname or IP.
+    if (argc != 2) {
+        std::cerr << "Usage: client <host>" << std::endl;
         return 1;
     }
+
+    std::thread t1(MessageBus, argv);
 
     string command;
     vector<string> splitcommand;
@@ -186,23 +221,6 @@ int main(int argc, char* argv[])
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
-        //Send any pending messages.
-        SendAnyPendingMessages(SocketPtr);
-
-        //Receive mesages if there are any.
-        AttemptToReadFromSocket(SocketPtr);
-
-        //If waiting for an acknowledgement, keep checking.
-        if (WaitingForACK) {
-            while (InMessageQueue.empty()) {
-                AttemptToReadFromSocket(SocketPtr);
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-            }
-            InMessageQueue.pop(); //What if this isn't an ACK?
-            WaitingForACK = false;
-        }
-
         //Check if there are any messages.
         if (!InMessageQueue.empty()) {
             //Notify user.
@@ -249,7 +267,7 @@ int main(int argc, char* argv[])
             //SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
             //Push it to the message queue.
             OutMessageQueue.push(ConvertToVectorChar(abouttosend));
-            WaitingForACK = true;
+            WaitForACK();
 
         } else {
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
@@ -258,19 +276,21 @@ int main(int argc, char* argv[])
 
     //Say goodbye to server.
     OutMessageQueue.push(ConvertToVectorChar("Bye!"));
-    SendAnyPendingMessages(SocketPtr);
+    WaitForACK();
 
     //Exit if we broke out of the loop.
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
 
+    t1.join();
+
     //Close socket.
     boost::system::error_code ec;
 
-    SocketPtr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-    SocketPtr->close(ec);
+    //SocketPtr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    //SocketPtr->close(ec);
 
-    SocketPtr = nullptr;
+    //SocketPtr = nullptr;
 
     std::cout << "Exiting..." << std::endl;
 
