@@ -287,6 +287,9 @@ int main(int argc, char* argv[])
         }
     }
 
+    //Say goodbye to server.
+    SendToServer(ConvertToVectorChar("Bye!"), InMessageQueue, OutMessageQueue);
+
     //Exit if we broke out of the loop.
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
@@ -302,6 +305,14 @@ int main(int argc, char* argv[])
     SocketMtx.unlock();
     OutMessageQueueMtx.unlock();
     InMessageQueueMtx.unlock();
+
+    //Close socket.
+    boost::system::error_code ec;
+
+    SocketPtr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    SocketPtr->close(ec);
+
+    SocketPtr = nullptr;
 
     std::cout << "Exiting..." << std::endl;
 

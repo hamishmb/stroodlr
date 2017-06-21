@@ -198,9 +198,50 @@ int main(int argc, char* argv[]) {
                 std::cout << "Message from local client: " << ConvertToString(InMessageQueue.front()) << std::endl;
             }
 
+            OutMessageQueue.push(ConvertToVectorChar("ACK"));
+
+            //If the message was "Bye!", close the socket and make a new one.
+            if (ConvertToString(InMessageQueue.front()) == "Bye!") {
+                //Give the output thread time to write the message.
+                std::cout << "Client gone. Closing socket..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+                boost::system::error_code ec;
+
+                SocketPtr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+                SocketPtr->close(ec);
+
+                std::cout << "Socket closed. Restarting threads and making a new socket..." << std::endl;
+
+                RequestedExit = true;
+
+                t1.join();
+                t2.join();
+                SocketPtr = nullptr;
+
+                //Handle any errors while setting up the socket.
+                try {
+                    //Setup socket.
+                    SocketPtr = SetupSocket(argv[1]);
+
+                } catch (boost::system::system_error const& e) {
+                    std::cerr << "Error: " << e.what() << std::endl;
+                    std::cerr << "Exiting..." << std::endl;
+
+                    //TODO Handle better later.
+                    return 1;
+                }
+
+                //We are now connected the the client. Start the handler thread to send messages back and forth.
+                std::thread t1(InMessageBus, SocketPtr);
+                std::thread t2(OutMessageBus, SocketPtr);
+
+                std::cout << "Restarted." << std::endl;
+
+            }
+
             InMessageQueue.pop();
 
-            OutMessageQueue.push(ConvertToVectorChar("ACK"));
         }
 
         //Wait for 1 second before doing anything.

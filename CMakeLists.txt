@@ -36,12 +36,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../dist)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../dist)
 
+#The client project.
+project(stroodlrc)
+
 #Use the C++11 standard.
 SET(GCC_CXX_COMPILE_FLAGS "-std=c++11")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_CXX_COMPILE_FLAGS}" )
-
-#The client project.
-project(stroodlrc)
 
 #Find BOOST.
 FIND_PACKAGE(Boost COMPONENTS system REQUIRED )
@@ -59,6 +59,10 @@ TARGET_LINK_LIBRARIES(stroodlrc LINK_PUBLIC ${Boost_LIBRARIES} ${CMAKE_THREAD_LI
 
 #The server project.
 project(stroodlrd)
+
+#Use the C++11 standard.
+SET(GCC_CXX_COMPILE_FLAGS "-std=c++11")
+SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_CXX_COMPILE_FLAGS}" )
 
 #Find BOOST.
 FIND_PACKAGE(Boost COMPONENTS system REQUIRED )
