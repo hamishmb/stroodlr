@@ -55,13 +55,10 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
 
 void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
-    std::vector<char>* MyBuffer;
+    std::vector<char>* MyBuffer = new std::vector<char> (128);;
     boost::system::error_code Error;
 
     try {
-        //Delete vector each time, for some reason fixed empty reads.
-        MyBuffer = new std::vector<char> (128);
-
         //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
         //Set up a timed select call, so we can handle timeout cases.
         fd_set fileDescriptorSet;
@@ -97,10 +94,6 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
 
         //Push to the message queue.
         InMessageQueue.push(*MyBuffer);
-
-        //Clear buffer.
-        MyBuffer->clear();
-        delete MyBuffer;
 
     } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
@@ -169,21 +162,14 @@ int main(int argc, char* argv[]) {
             OutMessageQueue.push(ConvertToVectorChar("ACK"));
 
             //If the message was "Bye!", close the socket and make a new one.
-            if (true) {
+            if (false) {
                 //Give the output thread time to write the message.
-                std::cout << "Client gone. Closing socket..." << std::endl;
+                std::cout << "Client gone. Making a new socket..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
                 boost::system::error_code ec;
 
-                SocketPtr->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
                 SocketPtr->close(ec);
-
-                std::cout << "Socket closed. Restarting threads and making a new socket..." << std::endl;
-
-                RequestedExit = true;
-
-                SocketPtr = nullptr;
 
                 //Handle any errors while setting up the socket.
                 try {

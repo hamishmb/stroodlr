@@ -69,13 +69,10 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* 
 
 void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
     //Setup.
-    std::vector<char>* MyBuffer;
+    std::vector<char>* MyBuffer = new std::vector<char> (128);;
     boost::system::error_code Error;
 
     try {
-        //Delete vector each time, for some reason fixed empty reads.
-        MyBuffer = new std::vector<char> (128);
-
         //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
         //Set up a timed select call, so we can handle timeout cases.
         fd_set fileDescriptorSet;
@@ -111,10 +108,6 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
 
         //Push to the message queue.
         InMessageQueue.push(*MyBuffer);
-
-        //Clear buffer.
-        MyBuffer->clear();
-        delete MyBuffer;
 
     } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
@@ -184,6 +177,7 @@ int main(int argc, char* argv[])
     int n = 0;
     char *token;
     char *strtok_saveptr;
+    bool WaitingForACK = false;
 
     //Greet user and start waiting for commands.
     //Display greeting.
@@ -192,17 +186,28 @@ int main(int argc, char* argv[])
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
+        //Send any pending messages.
+        SendAnyPendingMessages(SocketPtr);
+
         //Receive mesages if there are any.
         AttemptToReadFromSocket(SocketPtr);
+
+        //If waiting for an acknowledgement, keep checking.
+        if (WaitingForACK) {
+            while (InMessageQueue.empty()) {
+                AttemptToReadFromSocket(SocketPtr);
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            }
+            InMessageQueue.pop(); //What if this isn't an ACK?
+            WaitingForACK = false;
+        }
 
         //Check if there are any messages.
         if (!InMessageQueue.empty()) {
             //Notify user.
             std::cout << std::endl << "You have new messages." << std::endl << std::endl;
         }
-
-        //Send any pending messages.
-        SendAnyPendingMessages(SocketPtr);
 
         std::cout << ">>>";
         getline(std::cin, command);
@@ -244,6 +249,7 @@ int main(int argc, char* argv[])
             //SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
             //Push it to the message queue.
             OutMessageQueue.push(ConvertToVectorChar(abouttosend));
+            WaitingForACK = true;
 
         } else {
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
