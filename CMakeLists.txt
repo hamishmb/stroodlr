@@ -51,7 +51,7 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 find_package(Threads)
 
 #Client source files.
-set(CLIENT_SOURCE_FILES src/client.cpp include/tools.h include/tools.cpp include/loggertools.cpp include/clienttools.h include/clienttools.cpp)
+set(CLIENT_SOURCE_FILES src/client.cpp include/tools.h include/tools.cpp include/loggertools.h include/loggertools.cpp include/clienttools.h include/clienttools.cpp)
 
 #Build and link client.
 add_executable(stroodlrc ${CLIENT_SOURCE_FILES})
@@ -72,7 +72,7 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 find_package(Threads)
 
 #Server source files.
-set(SERVER_SOURCE_FILES src/server.cpp include/tools.h include/tools.cpp include/loggertools.cpp)
+set(SERVER_SOURCE_FILES src/server.cpp include/tools.h include/tools.cpp include/loggertools.h include/loggertools.cpp include/servertools.h include/servertools.cpp)
 
 #Build and link server.
 add_executable(stroodlrd ${SERVER_SOURCE_FILES})

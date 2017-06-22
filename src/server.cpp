@@ -26,6 +26,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 //Custom includes.
 #include "../include/tools.h"
+#include "../include/loggertools.h"
 
 using std::string;
 using std::vector;

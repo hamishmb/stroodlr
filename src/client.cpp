@@ -27,6 +27,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 //Custom headers.
 #include "../include/tools.h"
+#include "../include/loggertools.h"
 #include "../include/clienttools.h"
 
 using std::string;

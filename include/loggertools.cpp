@@ -14,13 +14,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
-//*** More will be added here later ***
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <ctime>
+#include "loggertools.h"
 #include "tools.h"
 
 using std::string;

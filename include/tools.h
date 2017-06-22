@@ -16,12 +16,10 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //Includes.
-#include <fstream>
 #include <string>
 #include <queue>
 #include <vector>
 #include <boost/asio.hpp>
-#include <boost/algorithm/string.hpp>
 
 //Function prototypes.
 bool ConnectedToServer(std::queue<std::vector<char> >& InMessageQueue);
@@ -30,48 +28,6 @@ std::string ConvertToString(std::vector<char> Vec);
 std::vector<char> ConvertToVectorChar(std::string Str);
 std::vector<std::string> split(const std::string& mystring, std::string delimiters);
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]);
-void Log_Critical(const char* msg);
-
-//Class definitions.
-class Logging {
-public:
-    //Default constuctor.
-    Logging() : Name("") {}
-
-    //Setup functions.
-    void SetName(std::string LoggerName);
-    void SetDateTimeFormat(std::string Format);
-    void SetFileName(std::string FileName);
-    void SetStyle(std::string Style);
-
-    //Config getter functions.
-    std::string GetName();
-    std::string GetDateTimeFormat();
-    std::string GetFileName();
-    std::string GetStyle();
-
-    //Logging functions.
-    bool Debug(std::string Message);
-    bool Info(std::string Message);
-    bool Warning(std::string Message);
-    bool Error(std::string Message);
-    bool ErrorWCerr(std::string Message);
-    bool Critical(std::string Message);
-    bool CriticalWCerr(std::string Message);
-
-private:
-    //Variables.
-    std::string Name;
-    std::string DateTimeFormat;
-    char TempTimeHolder[256];
-    std::string File;
-    std::ofstream FileHandle;
-    std::string MessageStyle;
-
-    //Private function declarations.
-    void GetTime();
-    std::string FormatMessage(std::string OrigMessage, std::string Level);
-};
 
 //Global data.
 extern bool RequestedExit;
