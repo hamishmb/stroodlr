@@ -16,12 +16,10 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <string>
 #include <queue>
 #include <vector>
 #include <boost/asio.hpp>
-#include <boost/algorithm/string.hpp>
-#include <string.h>
+#include <string>
 #include <chrono>
 #include <thread>
 
@@ -29,11 +27,11 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include "../include/tools.h"
 #include "../include/loggertools.h"
 #include "../include/clienttools.h"
+#include "../include/sockettools.h"
 
 using std::string;
 using std::vector;
 using std::queue;
-using boost::asio::ip::tcp;
 
 //Logger.
 Logging Logger;
@@ -52,22 +50,6 @@ void Usage() {
 
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]) {
-    //Sets up the socket for us, and returns a shared pointer to it.
-    std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
-
-    boost::asio::io_service io_service;
-
-    tcp::resolver resolver(io_service);
-    tcp::resolver::query query(argv[1], std::to_string(PortNumber));
-    tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-
-    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(io_service));
-    boost::asio::connect(*Socket, endpoint_iterator);
-
-    return Socket;
-}
-
 void MessageBus(char* argv[]) {
     //Setup.
     bool Sent = false;
@@ -77,7 +59,7 @@ void MessageBus(char* argv[]) {
     //Handle any errors while setting up the socket.
     try {
         //Setup socket.
-        SocketPtr = SetupSocket(PortNumber, argv);
+        SocketPtr = ConnectToSocket(PortNumber, argv);
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;

@@ -22,16 +22,16 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <vector>
 #include <boost/asio.hpp>
-#include <boost/algorithm/string.hpp>
 
 //Custom includes.
 #include "../include/tools.h"
 #include "../include/loggertools.h"
+#include "../include/servertools.h"
+#include "../include/sockettools.h"
 
 using std::string;
 using std::vector;
 using std::queue;
-using boost::asio::ip::tcp;
 
 //Logger.
 Logging Logger;
@@ -53,21 +53,6 @@ void Usage() {
 
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
-    //Sets up the socket for us, and returns a shared pointer to it.
-    std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
-
-    boost::asio::io_service io_service;
-    tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), std::stoi(PortNumber)));
-
-    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(io_service));
-
-    //Wait for a connection.
-    acceptor.accept(*Socket);
-
-    return Socket;
-}
-
 int main(int argc, char* argv[]) {
     //Error if we haven't been given a hostname or IP.
     if (argc < 2) {
@@ -87,7 +72,7 @@ int main(int argc, char* argv[]) {
     //Handle any errors while setting up the socket.
     try {
         //Setup socket.
-        SocketPtr = SetupSocket(argv[1]);
+        SocketPtr = CreateSocket(argv[1]);
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -120,7 +105,7 @@ int main(int argc, char* argv[]) {
                 //Handle any errors while setting up the socket.
                 try {
                     //Setup socket.
-                    SocketPtr = SetupSocket(argv[1]);
+                    SocketPtr = CreateSocket(argv[1]);
 
                 } catch (boost::system::system_error const& e) {
                     std::cerr << "Error: " << e.what() << std::endl;

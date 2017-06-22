@@ -19,7 +19,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <queue>
 #include <vector>
-#include <boost/asio.hpp>
 
 //Function prototypes.
 bool ConnectedToServer(std::queue<std::vector<char> >& InMessageQueue);
@@ -27,9 +26,6 @@ void SendToServer(std::vector<char> Msg, std::queue<std::vector<char> >& In, std
 std::string ConvertToString(std::vector<char> Vec);
 std::vector<char> ConvertToVectorChar(std::string Str);
 std::vector<std::string> split(const std::string& mystring, std::string delimiters);
-std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]);
-int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, std::queue<std::vector<char> >& In);
 
 //Global data.
 extern bool RequestedExit;
