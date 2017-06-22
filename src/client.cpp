@@ -178,6 +178,11 @@ int main(int argc, char* argv[])
 {
     //Setup the logger.
     Logger.SetName("Stroodlr Client "+Version);
+    Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
+    Logger.SetFileName("/tmp/stroodlrc.log");
+    Logger.SetStyle("Time Name Level");
+
+    Logger.Debug("Test");
 
     //Error if we haven't been given a hostname or IP.
     if (argc != 2) {

@@ -33,7 +33,7 @@ bool RequestedExit = false;
 
 //Global.
 string Version = "0.9";
-string ReleaseDate = "19/6/2017";
+string ReleaseDate = "22/6/2017";
 
 bool ConnectedToServer(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.

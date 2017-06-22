@@ -96,8 +96,9 @@ string Logging::FormatMessage(string OrigMessage, string Level) {
 
         //Add the correct separator.
         if (SplitStyle[i] == SplitStyle.back()) {
-            //We are at the last bit of the message, except for the actuall message text, so add a ": ".
+            //We are at the last bit of the message, except for the actual message text, so add a ": ".
             Message = Message + ": ";
+            Message = Message + OrigMessage;
 
         } else {
             //Not at the last element.

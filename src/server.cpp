@@ -32,6 +32,9 @@ using std::vector;
 using std::queue;
 using boost::asio::ip::tcp;
 
+//Logger.
+Logging Logger;
+
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
@@ -130,6 +133,14 @@ void SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket
 }
 
 int main(int argc, char* argv[]) {
+    //Setup the logger.
+    Logger.SetName("Stroodlr Server "+Version);
+    Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
+    Logger.SetFileName("/tmp/stroodlrd.log");
+    Logger.SetStyle("Time Name Level");
+
+    Logger.Debug("Test");
+
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
 
     if (argc < 2) {
