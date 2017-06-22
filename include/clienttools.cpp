@@ -25,6 +25,26 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 using std::queue;
 using std::vector;
 
+void ListConnectedServers() {
+    //List all connected servers.
+    //Ask the local server.
+    //NOT YET IMPLEMENTED***.
+    std::cout << std::endl << "Other Connected Servers: " << std::endl << std::endl;
+    std::cout << "\tNot yet implemented!" << std::endl << std::endl;
+}
+
+void ShowStatus() {
+    //Print status information. *** Actually check the status later ***
+    std::cout << std::endl << "Status:" << std::endl << std::endl;
+    std::cout << "\tClient Status: Good" << std::endl;
+    std::cout << "\tConnected To Server: Yes" << std::endl;
+    std::cout << std::endl << "\tServer Status: Good" << std::endl;
+
+    //List other connected servers.
+    ListConnectedServers();
+
+}
+
 void ShowHelp() {
     //Prints help information when requested by the user.
     std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;

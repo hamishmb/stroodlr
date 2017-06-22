@@ -221,6 +221,12 @@ int main(int argc, char* argv[])
             //No input, just hit enter key. Print ">>>" again.
             continue;
 
+        } else if (splitcommand[0] == "STATUS") {
+            ShowStatus();
+
+        } else if (splitcommand[0] == "LISTSERV") {
+            ListConnectedServers();
+
         } else if (splitcommand[0] == "LSMSG") {
             ListMessages(&InMessageQueue);
 

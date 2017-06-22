@@ -19,6 +19,8 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 //Function prototypes.
+void ListConnectedServers();
+void ShowStatus();
 void ShowHelp();
 void CheckForMessages(std::queue<std::vector<char> > *In);
 void ListMessages(std::queue<std::vector<char> > *In);
