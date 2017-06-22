@@ -57,82 +57,6 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
     return Socket;
 }
 
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
-    //Setup.
-    std::vector<char>* MyBuffer = new std::vector<char> (128);;
-    boost::system::error_code Error;
-
-    try {
-        //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
-        //Set up a timed select call, so we can handle timeout cases.
-        fd_set fileDescriptorSet;
-        struct timeval timeStruct;
-
-        //Set the timeout to 1 second
-        timeStruct.tv_sec = 1;
-        timeStruct.tv_usec = 0;
-        FD_ZERO(&fileDescriptorSet);
-
-        //We'll need to get the underlying native socket for this select call, in order
-        //to add a simple timeout on the read:
-        int nativeSocket = Socket->native();
-
-        FD_SET(nativeSocket, &fileDescriptorSet);
-
-        //Don't use mutexes here (blocks writing).
-        select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
-
-        if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
-            //We timed-out. Return.
-            return;
-        }
-
-        //There must be some data, so read it.
-        Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
-
-        if (Error == boost::asio::error::eof)
-            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
-
-        else if (Error)
-            throw boost::system::system_error(Error); // Some other error.
-
-        //Push to the message queue.
-        InMessageQueue.push(*MyBuffer);
-
-    } catch (std::exception& err) {
-        std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
-    }
-}
-
-void SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
-    //Setup.
-    boost::system::error_code Error;
-
-    try {
-        //Exit if there's nothing to send.
-        if (OutMessageQueue.empty()) {
-            return;
-        }
-
-        //Write the data.
-        boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
-
-        if (Error == boost::asio::error::eof)
-            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
-
-        else if (Error)
-            throw boost::system::system_error(Error); // Some other error.
-
-        //Remove last thing from message queue.
-        OutMessageQueue.pop();
-
-    } catch (std::exception& err) {
-        std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
-    }
-}
-
 int main(int argc, char* argv[]) {
     //Setup the logger.
     Logger.SetName("Stroodlr Server "+Version);
@@ -163,7 +87,7 @@ int main(int argc, char* argv[]) {
 
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
         //Receive mesages if there are any.
-        AttemptToReadFromSocket(SocketPtr);
+        AttemptToReadFromSocket(SocketPtr, InMessageQueue);
 
         //Check if there are any messages.
         while (!InMessageQueue.empty()) {
@@ -177,7 +101,7 @@ int main(int argc, char* argv[]) {
             if (strcmp(ConvertToString(InMessageQueue.front()).c_str(), "Bye!") == 0) {
                 //Give the output thread time to write the message.
                 //Send any pending messages.
-                SendAnyPendingMessages(SocketPtr);
+                SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
                 std::cout << "Client gone. Making a new socket..." << std::endl;
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -204,7 +128,7 @@ int main(int argc, char* argv[]) {
         }
 
         //Send any pending messages.
-        SendAnyPendingMessages(SocketPtr);
+        SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
 
         //Wait for 1 second before doing anything.
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));

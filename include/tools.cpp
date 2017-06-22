@@ -22,6 +22,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <chrono>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
+#include <iostream>
 
 using std::string;
 using std::vector;
@@ -90,4 +91,82 @@ void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char>
 
     //Remove the ACK from the queue.
     In.pop();
+}
+
+int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, queue<vector<char> >& In, queue<vector<char> >& Out) {
+    //Setup. 
+    boost::system::error_code Error;
+
+    try {
+        //Wait until there's something to send in the queue.
+        if (Out.empty()) {
+            return false;
+        }
+
+        //Write the data.
+        boost::asio::write(*Socket, boost::asio::buffer(Out.front()), Error);
+
+        if (Error == boost::asio::error::eof)
+            return false; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+
+        else if (Error)
+            throw boost::system::system_error(Error); // Some other error.
+
+        //Remove last thing from message queue.
+        Out.pop();  
+
+    } catch (std::exception& err) {
+        std::cerr << "Error: " << err.what() << std::endl;
+        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
+    }
+
+    return true;
+}
+
+void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, queue<vector<char> >& In) {
+    //Setup.
+    std::vector<char>* MyBuffer = new std::vector<char> (128);;
+    boost::system::error_code Error;
+
+    try {
+        //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
+        //Set up a timed select call, so we can handle timeout cases.
+        fd_set fileDescriptorSet;
+        struct timeval timeStruct;
+
+        //Set the timeout to 1 second
+        timeStruct.tv_sec = 1;
+        timeStruct.tv_usec = 0;
+        FD_ZERO(&fileDescriptorSet);
+
+        //We'll need to get the underlying native socket for this select call, in order
+        //to add a simple timeout on the read:
+        int nativeSocket = Socket->native();
+
+        FD_SET(nativeSocket, &fileDescriptorSet);
+
+        //Don't use mutexes here (blocks writing).
+        select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
+
+        if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
+            //We timed-out. Return.
+            return;
+        }
+
+        //There must be some data, so read it.
+        Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
+
+        if (Error == boost::asio::error::eof)
+            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+
+        else if (Error)
+            throw boost::system::system_error(Error); // Some other error.
+
+        //Push to the message queue.
+        In.push(*MyBuffer);
+
+    } catch (std::exception& err) {
+        std::cerr << "Error: " << err.what() << std::endl;
+        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
+    }
 }

@@ -68,84 +68,6 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* 
     return Socket;
 }
 
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
-    //Setup.
-    std::vector<char>* MyBuffer = new std::vector<char> (128);;
-    boost::system::error_code Error;
-
-    try {
-        //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
-        //Set up a timed select call, so we can handle timeout cases.
-        fd_set fileDescriptorSet;
-        struct timeval timeStruct;
-
-        //Set the timeout to 1 second
-        timeStruct.tv_sec = 1;
-        timeStruct.tv_usec = 0;
-        FD_ZERO(&fileDescriptorSet);
-
-        //We'll need to get the underlying native socket for this select call, in order
-        //to add a simple timeout on the read:
-        int nativeSocket = Socket->native();
-
-        FD_SET(nativeSocket, &fileDescriptorSet);
-
-        //Don't use mutexes here (blocks writing).
-        select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
-
-        if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
-            //We timed-out. Return.
-            return;
-        }
-
-        //There must be some data, so read it.
-        Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
-
-        if (Error == boost::asio::error::eof)
-            return; // Connection closed cleanly by peer. *** HANDLE BETTER *
-
-        else if (Error)
-            throw boost::system::system_error(Error); // Some other error.
-
-        //Push to the message queue.
-        InMessageQueue.push(*MyBuffer);
-
-    } catch (std::exception& err) {
-        std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
-    }
-}
-
-int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket) {
-    //Setup.
-    boost::system::error_code Error;
-
-    try {
-        //Wait until there's something to send in the queue.
-        if (OutMessageQueue.empty()) {
-            return false;
-        }
-
-        //Write the data.
-        boost::asio::write(*Socket, boost::asio::buffer(OutMessageQueue.front()), Error);
-
-        if (Error == boost::asio::error::eof)
-            return false; // Connection closed cleanly by peer. *** HANDLE BETTER ***
-
-        else if (Error)
-            throw boost::system::system_error(Error); // Some other error.
-
-        //Remove last thing from message queue.
-        OutMessageQueue.pop();  
-
-    } catch (std::exception& err) {
-        std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
-    }
-
-    return true;
-}
-
 void MessageBus(char* argv[]) {
     //Setup.
     bool Sent = false;
@@ -167,10 +89,10 @@ void MessageBus(char* argv[]) {
 
     while (!::RequestedExit) {
         //Send any pending messages.
-        Sent = SendAnyPendingMessages(SocketPtr);
+        Sent = SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
 
         //Receive messages if there are any.
-        AttemptToReadFromSocket(SocketPtr);
+        AttemptToReadFromSocket(SocketPtr, InMessageQueue);
 
     }
 }
