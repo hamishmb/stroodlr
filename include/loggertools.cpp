@@ -111,7 +111,7 @@ string Logging::FormatMessage(string OrigMessage, string Level) {
 
 }
 
-//---------- Logging Functions TODO ----------
+//---------- Logging Functions ----------
 bool Logging::Debug(string Message) {
     FileHandle << FormatMessage(Message, "DEBUG") << std::endl;
     return FileHandle.good();

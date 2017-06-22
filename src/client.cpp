@@ -39,6 +39,17 @@ Logging Logger;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
+void Usage() {
+    //Prints cmdline options.
+    std::cout << "Usage: stroodlc [OPTION]" << std::endl << std::endl << std::endl;
+    std::cout << "Options:" << std::endl << std::endl;
+    std::cout << "        <hostnameOrIP> (Usually localhost)" << std::endl << std::endl;
+    std::cout << "Stroodlr "+Version+" is released under the GNU GPL Version 3" << std::endl;
+    std::cout << "Copyright (C) Hamish McIntyre-Bhatty 2017" << std::endl;
+    exit(0);
+
+}
+
 void ShowHelp() {
     //Prints help information when requested by the user.
     std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
@@ -176,19 +187,19 @@ void MessageBus(char* argv[]) {
 
 int main(int argc, char* argv[])
 {
-    //Setup the logger.
+    //Error if we haven't been given a hostname or IP.
+    if (argc != 2) {
+        Usage();
+    }
+
+    //Setup the logger. *** Handle exceptions ***
     Logger.SetName("Stroodlr Client "+Version);
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
     Logger.SetFileName("/tmp/stroodlrc.log");
     Logger.SetStyle("Time Name Level");
 
-    Logger.Debug("Test");
-
-    //Error if we haven't been given a hostname or IP.
-    if (argc != 2) {
-        std::cerr << "Usage: client <host>" << std::endl;
-        return 1;
-    }
+    std::cout << "Stroodlr Client " << Version << " Starting..." << std::endl;
+    Logger.Info("Stroodlr Client "+Version+" Starting...");
 
     std::thread t1(MessageBus, argv);
 
