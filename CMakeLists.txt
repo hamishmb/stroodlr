@@ -51,7 +51,7 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 find_package(Threads)
 
 #Client source files.
-set(CLIENT_SOURCE_FILES src/client.cpp include/tools.h include/tools.cpp include/loggertools.cpp)
+set(CLIENT_SOURCE_FILES src/client.cpp include/tools.h include/tools.cpp include/loggertools.cpp include/clienttools.h include/clienttools.cpp)
 
 #Build and link client.
 add_executable(stroodlrc ${CLIENT_SOURCE_FILES})

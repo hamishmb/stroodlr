@@ -23,7 +23,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 #include <boost/algorithm/string.hpp>
 
-
 //Function prototypes.
 bool ConnectedToServer(std::queue<std::vector<char> >& InMessageQueue);
 void SendToServer(std::vector<char> Msg, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);

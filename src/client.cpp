@@ -27,6 +27,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 //Custom headers.
 #include "../include/tools.h"
+#include "../include/clienttools.h"
 
 using std::string;
 using std::vector;
@@ -48,18 +49,6 @@ void Usage() {
     std::cout << "Copyright (C) Hamish McIntyre-Bhatty 2017" << std::endl;
     exit(0);
 
-}
-
-void ShowHelp() {
-    //Prints help information when requested by the user.
-    std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << "LSMSG\t\t\tLSMSG\t\t\tLists all messages, and clears them from the list." << std::endl;
-    std::cout << "SEND\t\t\tSEND Test message\t\t\tSends a message (currently only to the local server)." << std::endl;
-    std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
-    std::cout << "Q, QUIT, EXIT\t\t\tExits the program." << std::endl << std::endl;
-    
 }
 
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(int PortNumber, char* argv[]) {
@@ -215,17 +204,15 @@ int main(int argc, char* argv[])
 
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
         //Check if there are any messages.
-        if (!InMessageQueue.empty()) {
-            //Notify user.
-            std::cout << std::endl << "You have new messages." << std::endl << std::endl;
-        }
+        CheckForMessages(&InMessageQueue);
 
+        //Input prompt.
         std::cout << ">>>";
         getline(std::cin, command);
         splitcommand = split(command, " ");
 
         //Handle input from user.
-        if (!std::cin || (splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
+        if (!std::cin /* HANDLE BETTER */ || (splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
             //User has requested that we exit.
             break;
 
@@ -234,20 +221,7 @@ int main(int argc, char* argv[])
             continue;
 
         } else if (splitcommand[0] == "LSMSG") {
-            //If there are no messages, inform the user.
-            if (InMessageQueue.empty()) {
-                std::cout << "No messages." << std::endl;
-                continue;
-            }
-
-            //List all messages.
-            while (!InMessageQueue.empty()) {
-                //Convert each message to a string and then print it.
-                std::cout << std::endl << ConvertToString(InMessageQueue.front()) << std::endl;
-                InMessageQueue.pop();
-            }
-
-            std::cout << "End of messages." << std::endl << std::endl;
+            ListMessages(&InMessageQueue);
 
         } else if (splitcommand[0] == "HELP") {
             ShowHelp();
