@@ -42,6 +42,17 @@ queue<vector<char> > InMessageQueue;
 //Options. TODO use cmdline flags to set.
 bool Debug = true;
 
+void Usage() {
+    //Prints cmdline options.
+    std::cout << "Usage: stroodld [OPTION]" << std::endl << std::endl << std::endl;
+    std::cout << "Options:" << std::endl << std::endl;
+    std::cout << "        <portnumer> (suggested: 50000)" << std::endl << std::endl;
+    std::cout << "Stroodlr "+Version+" is released under the GNU GPL Version 3" << std::endl;
+    std::cout << "Copyright (C) Hamish McIntyre-Bhatty 2017" << std::endl;
+    exit(0);
+
+}
+
 std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
@@ -58,6 +69,11 @@ std::shared_ptr<boost::asio::ip::tcp::socket> SetupSocket(string PortNumber) {
 }
 
 int main(int argc, char* argv[]) {
+    //Error if we haven't been given a hostname or IP.
+    if (argc < 2) {
+        Usage();
+    }
+
     //Setup the logger.
     Logger.SetName("Stroodlr Server "+Version);
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
@@ -67,10 +83,6 @@ int main(int argc, char* argv[]) {
     Logger.Debug("Test");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-
-    if (argc < 2) {
-        Log_Critical("ERROR, no port provided\n");
-    }
 
     //Handle any errors while setting up the socket.
     try {

@@ -18,9 +18,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <fstream>
 #include <string>
 
-//Function declarations.
-void Log_Critical(const char* msg);
-
 //Class definitions.
 class Logging {
 public:

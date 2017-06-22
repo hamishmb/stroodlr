@@ -100,7 +100,7 @@ void MessageBus(char* argv[]) {
 int main(int argc, char* argv[])
 {
     //Error if we haven't been given a hostname or IP.
-    if (argc != 2) {
+    if (argc < 2) {
         Usage();
     }
 

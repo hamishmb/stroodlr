@@ -152,11 +152,3 @@ bool Logging::CriticalWCerr(string Message) {
     FileHandle << AboutToWrite << std::endl;
     return FileHandle.good();
 }
-
-//DEPRECATED.
-void Log_Critical(const char* msg) {
-    //Used to log critical errors and exit the program.
-    std::cout << msg << std::endl;
-    ::RequestedExit = true; //Stop threads.
-    exit(1);
-}
