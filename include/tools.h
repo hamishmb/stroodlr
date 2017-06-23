@@ -21,8 +21,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 //Function prototypes.
-bool ConnectedToServer(std::queue<std::vector<char> >& InMessageQueue);
-void SendToServer(std::vector<char> Msg, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
 std::string ConvertToString(std::vector<char> Vec);
 std::vector<char> ConvertToVectorChar(std::string Str);
 std::vector<std::string> split(const std::string& mystring, std::string delimiters);

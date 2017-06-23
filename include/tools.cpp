@@ -18,8 +18,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <queue>
 #include <vector>
-#include <thread>
-#include <chrono>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 
@@ -63,31 +61,4 @@ vector<string> split(const string& mystring, string delimiters) {
     boost::split(splitstring, mystring, boost::is_any_of(delimiters));
 
     return splitstring;
-}
-
-bool ConnectedToServer(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
-    //Tests if we're still connected to the local server.
-    if (InMessageQueue.empty()) {
-        return true;
-
-    }
-
-    vector<string> SplitVec;
-    string temp = ConvertToString(InMessageQueue.front());
-    boost::split(SplitVec, temp, boost::algorithm::is_any_of(" ")); //Need to assemble string from queue vec first.
-
-    return (SplitVec[0] != "Error:"); //As long at the message doesn't start with an error, we should be connected.
-
-}
-
-void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
-    //Sends the given message to the local server and waits for an ACK(nowledgement). *** TODO If ACK is very slow, try again ***
-    //Push it to the message queue.
-    Out.push(Msg);
-
-    //Wait until an "ACK" has arrived.
-    while (In.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-    //Remove the ACK from the queue.
-    In.pop();
 }

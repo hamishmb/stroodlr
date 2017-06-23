@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
+    while (ConnectedToClient(InMessageQueue) && !::RequestedExit) {
         //Receive mesages if there are any.
         AttemptToReadFromSocket(SocketPtr, InMessageQueue);
 
