@@ -139,7 +139,20 @@ int main(int argc, char* argv[])
 
         } else if (splitcommand[0] == "SEND") {
             //Get the 2nd element and onwards, assemble into a string.
-            abouttosend = splitcommand[1]; //Do properly later, handle spaces, maybe make another split function. ***
+            splitcommand.erase(splitcommand.begin(), splitcommand.begin() + 1);
+
+            //Assemble into a string.
+            abouttosend = "";
+
+            for (int i = 0; i < splitcommand.size(); i++) {
+                if (i != splitcommand.size()) {
+                    abouttosend = abouttosend + splitcommand[i] + " ";
+
+                } else {
+                    abouttosend = abouttosend + splitcommand[i];
+
+                }
+            }
 
             //Send it.
             SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
