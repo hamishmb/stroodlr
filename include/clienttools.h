@@ -16,10 +16,13 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <queue>
+#include <deque>
 #include <vector>
+#include <string>
 
 //Function prototypes.
 void ListConnectedServers();
+void ShowHistory(const std::deque<std::string> &History);
 void ShowStatus();
 void ShowHelp();
 void CheckForMessages(std::queue<std::vector<char> > *In);

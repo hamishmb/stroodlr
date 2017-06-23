@@ -17,6 +17,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <queue>
+#include <deque>
 #include <vector>
 #include <string>
 #include <thread>
@@ -26,6 +27,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include "tools.h"
 
 using std::queue;
+using std::deque;
 using std::vector;
 using std::string;
 
@@ -35,6 +37,18 @@ void ListConnectedServers() {
     //NOT YET IMPLEMENTED***.
     std::cout << std::endl << "Other Connected Servers: " << std::endl << std::endl;
     std::cout << "\tNot yet implemented!" << std::endl << std::endl;
+}
+
+void ShowHistory(const deque<string> &History) {
+    //Print history.
+    std::cout << std::endl << "History:" << std::endl << std::endl;
+
+    for (int i = 0; i < History.size(); i++) {
+        std::cout << "\t" + History[i] << std::endl;
+
+    }
+
+    std::cout << std::endl;
 }
 
 void ShowStatus() {

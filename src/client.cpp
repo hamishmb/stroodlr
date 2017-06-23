@@ -17,6 +17,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
 #include <queue>
+#include <deque>
 #include <vector>
 #include <boost/asio.hpp>
 #include <string>
@@ -32,6 +33,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 using std::string;
 using std::vector;
 using std::queue;
+using std::deque;
 
 //Logger.
 Logging Logger;
@@ -99,6 +101,7 @@ int main(int argc, char* argv[])
 
     string command;
     vector<string> splitcommand;
+    deque<string> UserInput;
     string abouttosend;
 
     //Greet user and start waiting for commands.
@@ -108,22 +111,38 @@ int main(int argc, char* argv[])
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
-        //Check if there are any messages.
         CheckForMessages(&InMessageQueue);
 
         //Input prompt.
         std::cout << ">>>";
+
         getline(std::cin, command);
         splitcommand = split(command, " ");
 
-        //Handle input from user.
-        if (!std::cin /* HANDLE BETTER */ || (splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
+        //Handle invalid/quit/no input from user.
+        if (!std::cin) {
+            //Invalid input.
+            std::cout << std::endl << "Invalid input!" << std::endl;
+            std::cin.clear();
+            continue;
+
+        } else if ((splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
             //User has requested that we exit.
             break;
 
         } else if (splitcommand[0] == "") {
             //No input, just hit enter key. Print ">>>" again.
             continue;
+
+        } else {
+            //Input is valid. Save it so we can recall later.
+            UserInput.push_back(command);
+
+        }
+
+        //Handle "Proper" input.
+        if (splitcommand[0] == "HISTORY") {
+            ShowHistory(UserInput);
 
         } else if (splitcommand[0] == "STATUS") {
             ShowStatus();
@@ -159,6 +178,12 @@ int main(int argc, char* argv[])
 
         } else {
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
+        }
+
+        //Trim history below 100 items if needed (stops it from consuming too much RAM).
+        if (UserInput.size() > 99) {
+            UserInput.pop_front();
+
         }
     }
 
