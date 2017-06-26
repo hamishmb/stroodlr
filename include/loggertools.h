@@ -29,12 +29,14 @@ public:
     void SetDateTimeFormat(std::string Format);
     void SetFileName(std::string FileName);
     void SetStyle(std::string Style);
+    void SetLevel(std::string Level);
 
     //Config getter functions.
     std::string GetName();
     std::string GetDateTimeFormat();
     std::string GetFileName();
     std::string GetStyle();
+    std::string GetLevel();
 
     //Logging functions.
     bool Debug(std::string Message);
@@ -53,6 +55,13 @@ private:
     std::string File;
     std::ofstream FileHandle;
     std::string MessageStyle;
+
+    //Logging level variables. Default level is Debug.
+    bool ShowDebug = true;
+    bool ShowInfo = true;
+    bool ShowWarning = true;
+    bool ShowError = true;
+    bool ShowCritical = true;
 
     //Private function declarations.
     void GetTime();

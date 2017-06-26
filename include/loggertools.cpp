@@ -49,6 +49,49 @@ void Logging::SetStyle(string Style) {
     MessageStyle = Style;
 }
 
+void Logging::SetLevel(string Level) {
+    if (Level == "Debug") {
+        ShowDebug = true;
+        ShowInfo = true;
+        ShowWarning = true;
+        ShowError = true;
+        ShowCritical = true;
+
+    } else if (Level == "Info") {
+        ShowDebug = false;
+        ShowInfo = true;
+        ShowWarning = true;
+        ShowError = true;
+        ShowCritical = true;
+
+    } else if (Level == "Warning") {
+        ShowDebug = false;
+        ShowInfo = false;
+        ShowWarning = true;
+        ShowError = true;
+        ShowCritical = true;
+
+    } else if (Level == "Error") {
+        ShowDebug = false;
+        ShowInfo = false;
+        ShowWarning = false;
+        ShowError = true;
+        ShowCritical = true;
+
+    } else if (Level == "Critical") {
+        ShowDebug = false;
+        ShowInfo = false;
+        ShowWarning = false;
+        ShowError = false;
+        ShowCritical = true;
+
+    } else {
+        //Invalid level.
+        throw std::runtime_error("Invalid logging level");
+
+    }
+}
+
 //---------- Config Getting functions ----------
 string Logging::GetName() {
     return Name;
@@ -65,6 +108,29 @@ string Logging::GetFileName() {
 
 string Logging::GetStyle() {
     return MessageStyle;
+}
+
+string Logging::GetLevel() {
+    if (ShowDebug == true) {
+        return "Debug";
+
+    } else if (ShowInfo == true) {
+        return "Info";
+
+    } else if (ShowWarning == true) {
+        return "Warning";
+
+    } else if (ShowError == true) {
+        return "Error";
+
+    } else if (ShowCritical == true) {
+        return "Critical";
+
+    } else {
+        //Invalid level.
+        throw std::runtime_error("Invalid logging level");
+
+    }
 }
 
 //---------- Private Functions ----------
@@ -113,42 +179,63 @@ string Logging::FormatMessage(string OrigMessage, string Level) {
 
 //---------- Logging Functions ----------
 bool Logging::Debug(string Message) {
-    FileHandle << FormatMessage(Message, "DEBUG") << std::endl;
+    if (ShowDebug) {
+        FileHandle << FormatMessage(Message, "DEBUG") << std::endl;
+    }
+
     return FileHandle.good();
 }
 
 bool Logging::Info(string Message) {
-    FileHandle << FormatMessage(Message, "INFO") << std::endl;
+    if (ShowInfo) {
+        FileHandle << FormatMessage(Message, "INFO") << std::endl;
+    }
+
     return FileHandle.good();
 }
 
 bool Logging::Warning(string Message) {
-    FileHandle << FormatMessage(Message, "WARNING") << std::endl;
+    if (ShowWarning) {
+        FileHandle << FormatMessage(Message, "WARNING") << std::endl;
+    }
+
     return FileHandle.good();
 }
 
 bool Logging::Error(string Message) {
-    FileHandle << FormatMessage(Message, "ERROR") << std::endl;
+    if (ShowError) {
+        FileHandle << FormatMessage(Message, "ERROR") << std::endl;
+    }
+
     return FileHandle.good();
 }
 
 bool Logging::ErrorWCerr(string Message) {
-    string AboutToWrite;
-    AboutToWrite = FormatMessage(Message, "ERROR");
-    std::cerr << AboutToWrite << std::endl;
-    FileHandle << AboutToWrite << std::endl;
+    if (ShowError) {
+        string AboutToWrite;
+        AboutToWrite = FormatMessage(Message, "ERROR");
+        std::cerr << AboutToWrite << std::endl;
+        FileHandle << AboutToWrite << std::endl;
+    }
+
     return FileHandle.good();
 }
 
 bool Logging::Critical(string Message) {
-    FileHandle << FormatMessage(Message, "CRITICAL") << std::endl;
+    if (ShowCritical) {
+        FileHandle << FormatMessage(Message, "CRITICAL") << std::endl;
+    }
+
     return FileHandle.good();
 }
 
 bool Logging::CriticalWCerr(string Message) {
-    string AboutToWrite;
-    AboutToWrite = FormatMessage(Message, "CRITICAL");
-    std::cerr << AboutToWrite << std::endl;
-    FileHandle << AboutToWrite << std::endl;
+    if (ShowCritical) {
+        string AboutToWrite;
+        AboutToWrite = FormatMessage(Message, "CRITICAL");
+        std::cerr << AboutToWrite << std::endl;
+        FileHandle << AboutToWrite << std::endl;
+    }
+
     return FileHandle.good();
 }

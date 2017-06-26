@@ -64,8 +64,10 @@ int main(int argc, char* argv[]) {
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
     Logger.SetFileName("/tmp/stroodlrd.log");
     Logger.SetStyle("Time Name Level");
+    Logger.SetLevel("Info");
 
-    Logger.Debug("Test");
+    std::cout << "Stroodlr Server " << Version << " Starting..." << std::endl;
+    Logger.Info("Stroodlr Server "+Version+" Starting...");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
     std::shared_ptr<boost::asio::io_service> io_service;

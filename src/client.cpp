@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
     Logger.SetFileName("/tmp/stroodlrc.log");
     Logger.SetStyle("Time Name Level");
+    Logger.SetLevel("Info");
 
     std::cout << "Stroodlr Client " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Client "+Version+" Starting...");
