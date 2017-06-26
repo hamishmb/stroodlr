@@ -21,13 +21,19 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 
 #include "tools.h"
+#include "loggertools.h"
 
 using std::queue;
 using std::vector;
 using std::string;
 
+//Allow us to use the logger here.
+extern Logging Logger;
+
 bool ConnectedToClient(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.
+    Logger.Debug("Server Tools: ConnectedToClient(): Checking we're still connected to the client...");
+
     if (InMessageQueue.empty()) {
         return true;
 

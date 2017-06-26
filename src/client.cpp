@@ -99,6 +99,7 @@ int main(int argc, char* argv[])
     std::cout << "Stroodlr Client " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Client "+Version+" Starting...");
 
+    Logger.Debug("main(): Starting message bus thread...");
     std::thread t1(MessageBus, argv);
 
     string command;
@@ -113,53 +114,68 @@ int main(int argc, char* argv[])
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
+        Logger.Debug("main(): Checking for new messages...");
         CheckForMessages(&InMessageQueue);
 
         //Input prompt.
         std::cout << ">>>";
 
+        Logger.Debug("main(): Waiting for user input...");
         getline(std::cin, command);
         splitcommand = split(command, " ");
 
         //Handle invalid/quit/no input from user.
         if (!std::cin) {
             //Invalid input.
+            Logger.Debug("main(): Invalid input. Asking for more input...");
             std::cout << std::endl << "Invalid input!" << std::endl;
             std::cin.clear();
             continue;
 
         } else if ((splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
             //User has requested that we exit.
+            Logger.Debug("main(): User requested an exit...");
             break;
 
         } else if (splitcommand[0] == "") {
             //No input, just hit enter key. Print ">>>" again.
+            Logger.Debug("main(): No Input. Asking for more input...");
             continue;
 
         } else {
             //Input is valid. Save it so we can recall later.
+            Logger.Debug("main(): Valid input. Saving to UserInput so we can recall it later if needed...");
             UserInput.push_back(command);
 
         }
 
         //Handle "Proper" input.
         if (splitcommand[0] == "HISTORY") {
+            Logger.Debug("main(): Showing history...");
             ShowHistory(UserInput);
 
         } else if (splitcommand[0] == "STATUS") {
+            Logger.Debug("main(): Showing status...");
             ShowStatus();
 
         } else if (splitcommand[0] == "LISTSERV") {
+            Logger.Debug("main(): Listing connected servers...");
             ListConnectedServers();
 
         } else if (splitcommand[0] == "LSMSG") {
+            Logger.Debug("main(): Listing messages...");
             ListMessages(&InMessageQueue);
 
         } else if (splitcommand[0] == "HELP") {
+            Logger.Debug("main(): Showing help...");
             ShowHelp();
 
         } else if (splitcommand[0] == "SEND") {
+            //Send a message.
+            Logger.Debug("main(): Preparing to send a message...");
+
             //Get the 2nd element and onwards, assemble into a string.
+            Logger.Debug("main(): Assembling relevant parts of input into a string containing the message...");
             splitcommand.erase(splitcommand.begin(), splitcommand.begin() + 1);
 
             //Assemble into a string.
@@ -176,9 +192,12 @@ int main(int argc, char* argv[])
             }
 
             //Send it.
+            Logger.Debug("main(): Done. Sending it...");
             SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
+            Logger.Debug("main(): Done.");
 
         } else {
+            Logger.Debug("main(): Invalid command.");
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
         }
 
@@ -190,14 +209,18 @@ int main(int argc, char* argv[])
     }
 
     //Say goodbye to server.
+    Logger.Debug("main(): Saying goodbye to server...");
     SendToServer(ConvertToVectorChar("Bye!"), InMessageQueue, OutMessageQueue);
 
     //Exit if we broke out of the loop.
+    Logger.Debug("main(): Done. Saying goodbye to user and requesting that all threads exit...");
+
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
 
     t1.join();
 
+    Logger.Debug("main(): All threads have exited. Exiting...");
     std::cout << "Exiting..." << std::endl;
 
     return 0;

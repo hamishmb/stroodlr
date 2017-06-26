@@ -21,18 +21,27 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 #include <iostream>
 
+#include "loggertools.h"
+
 using std::string;
 using std::vector;
 using std::queue;
 using boost::asio::ip::tcp;
 
+//Allow us to use the logger here.
+extern Logging Logger;
+
 int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, queue<vector<char> >& In, queue<vector<char> >& Out) {
+    //Sends any messages waiting in the message queue.
+    Logger.Debug("Socket Tools: SendAnyPendingMessages(): Sending any pending messages...");
+
     //Setup. 
     boost::system::error_code Error;
 
     try {
         //Wait until there's something to send in the queue.
         if (Out.empty()) {
+            Logger.Debug("Socket Tools: SendAnyPendingMessages(): Nothing to send.");
             return false;
         }
 
@@ -53,10 +62,14 @@ int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket,
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
     }
 
+    Logger.Debug("Socket Tools: SendAnyPendingMessages(): Done.");
     return true;
 }
 
 void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, queue<vector<char> >& In) {
+    //Attempts to read some data from the socket.
+    Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Attempting to read some data from the socket...");
+
     //Setup.
     std::vector<char>* MyBuffer = new std::vector<char> (128);;
     boost::system::error_code Error;
@@ -79,14 +92,19 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
         FD_SET(nativeSocket, &fileDescriptorSet);
 
         //Don't use mutexes here (blocks writing).
+        Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Waiting for data...");
+
         select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
 
         if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
             //We timed-out. Return.
+            Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Timed out. Giving up for now...");
             return;
         }
 
         //There must be some data, so read it.
+        Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Found data, reading it...");
+
         Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
 
         if (Error == boost::asio::error::eof)
@@ -98,6 +116,8 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
         //Push to the message queue.
         In.push(*MyBuffer);
 
+        Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Done.");
+
     } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
@@ -106,6 +126,8 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
 
 std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, char* argv[]) {
     //Sets up the socket for us, and returns a shared pointer to it.
+    Logger.Debug("Socket Tools: ConnectToSocket(): Preparing to connect to a socket...");
+
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     tcp::resolver resolver(*io_service);
@@ -113,13 +135,18 @@ std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<bo
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
+
+    Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Attempting to connect...");
     boost::asio::connect(*Socket, endpoint_iterator);
 
+    Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Success. Returning Socket pointer...");
     return Socket;
 }
 
 std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, string PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
+    Logger.Debug("Socket Tools: CreateSocket(): Creating a socket...");
+
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     tcp::acceptor acceptor(*io_service, tcp::endpoint(tcp::v4(), std::stoi(PortNumber)));
@@ -127,7 +154,10 @@ std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
 
     //Wait for a connection.
+    Logger.Debug("Socket Tools: CreateSocket(): Waiting for a connection...");
+
     acceptor.accept(*Socket);
 
+    Logger.Debug("Socket Tools: CreateSocket(): Success. Returning socket pointer...");
     return Socket;
 }

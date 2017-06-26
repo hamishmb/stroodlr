@@ -25,22 +25,29 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 
 #include "tools.h"
+#include "loggertools.h"
 
 using std::queue;
 using std::deque;
 using std::vector;
 using std::string;
 
+//Allow us to use the logger here.
+extern Logging Logger;
+
 void ListConnectedServers() {
     //List all connected servers.
     //Ask the local server.
     //NOT YET IMPLEMENTED***.
+    Logger.Warning("Client Tools: ListConnectedServers(): Not yet implemented!");
     std::cout << std::endl << "Other Connected Servers: " << std::endl << std::endl;
     std::cout << "\tNot yet implemented!" << std::endl << std::endl;
 }
 
 void ShowHistory(const deque<string> &History) {
     //Print history.
+    Logger.Debug("Client Tools: ShowHistory(): Showing history...");
+
     std::cout << std::endl << "History:" << std::endl << std::endl;
 
     for (int i = 0; i < History.size(); i++) {
@@ -53,6 +60,8 @@ void ShowHistory(const deque<string> &History) {
 
 void ShowStatus() {
     //Print status information. *** Actually check the status later ***
+    Logger.Debug("Client Tools: ShowStatus(): Showing status...");
+
     std::cout << std::endl << "Status:" << std::endl << std::endl;
     std::cout << "\tClient Status: Good" << std::endl;
     std::cout << "\tConnected To Server: Yes" << std::endl;
@@ -65,6 +74,8 @@ void ShowStatus() {
 
 void ShowHelp() {
     //Prints help information when requested by the user.
+    Logger.Debug("Client Tools: ShowHelp(): Showing help information...");
+
     std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
@@ -77,14 +88,20 @@ void ShowHelp() {
 
 void CheckForMessages(queue<vector<char> > *In) {
     //Check if there are any messages, and notifies user if so.
+    Logger.Debug("Client Tools: CheckForMessages(): Checking for messages...");
+
     if (!In->empty()) {
         //Notify user.
+        Logger.Debug("Client Tools: CheckForMessages(): There are new messages. Notifying user...");
         std::cout << std::endl << "You have new messages." << std::endl << std::endl;
     }
 }
 
 void ListMessages(queue<vector<char> > *In) {
+    Logger.Debug("Client Tools: ListMessages(): Listing any messages...");
+
     if (In->empty()) {
+        Logger.Debug("Client Tools: ListMessages(): No messages.");
         std::cout << "No messages." << std::endl;
         return;
     }
@@ -96,23 +113,30 @@ void ListMessages(queue<vector<char> > *In) {
         In->pop();
     }
 
+    Logger.Debug("Client Tools: ListMessages(): Done.");
     std::cout << "End of messages." << std::endl << std::endl;
 }
 
 void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
     //Sends the given message to the local server and waits for an ACK(nowledgement). *** TODO If ACK is very slow, try again ***
+    Logger.Debug("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
+
     //Push it to the message queue.
     Out.push(Msg);
 
     //Wait until an "ACK" has arrived.
+    Logger.Debug("Client Tools: SendToServer(): Waiting for ACK...");
     while (In.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     //Remove the ACK from the queue.
+    Logger.Debug("Client Tools: SendToServer(): Done.");
     In.pop();
 }
 
 bool ConnectedToServer(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.
+    Logger.Debug("Client Tools: ConnectedToServer(): Checking we're still connected to the server...");
+
     if (InMessageQueue.empty()) {
         return true;
 
