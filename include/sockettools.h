@@ -24,5 +24,5 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 //Function declarations.
 int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
 void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, std::queue<std::vector<char> >& In);
-std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(int PortNumber, char* argv[]);
-std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::string PortNumber);
+std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, char* argv[]);
+std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, std::string PortNumber);

@@ -104,30 +104,27 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
     }
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(int PortNumber, char* argv[]) {
+std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, char* argv[]) {
     //Sets up the socket for us, and returns a shared pointer to it.
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
-    boost::asio::io_service io_service;
-
-    tcp::resolver resolver(io_service);
+    tcp::resolver resolver(*io_service);
     tcp::resolver::query query(argv[1], std::to_string(PortNumber));
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
-    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(io_service));
+    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
     boost::asio::connect(*Socket, endpoint_iterator);
 
     return Socket;
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(string PortNumber) {
+std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, string PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
-    boost::asio::io_service io_service;
-    tcp::acceptor acceptor(io_service, tcp::endpoint(tcp::v4(), std::stoi(PortNumber)));
+    tcp::acceptor acceptor(*io_service, tcp::endpoint(tcp::v4(), std::stoi(PortNumber)));
 
-    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(io_service));
+    Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
 
     //Wait for a connection.
     acceptor.accept(*Socket);

@@ -68,11 +68,13 @@ int main(int argc, char* argv[]) {
     Logger.Debug("Test");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+    std::shared_ptr<boost::asio::io_service> io_service;
 
     //Handle any errors while setting up the socket.
     try {
         //Setup socket.
-        SocketPtr = CreateSocket(argv[1]);
+        io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
+        SocketPtr = CreateSocket(io_service, argv[1]);
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -105,7 +107,7 @@ int main(int argc, char* argv[]) {
                 //Handle any errors while setting up the socket.
                 try {
                     //Setup socket.
-                    SocketPtr = CreateSocket(argv[1]);
+                    SocketPtr = CreateSocket(io_service, argv[1]);
 
                 } catch (boost::system::system_error const& e) {
                     std::cerr << "Error: " << e.what() << std::endl;

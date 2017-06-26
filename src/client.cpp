@@ -57,11 +57,13 @@ void MessageBus(char* argv[]) {
     bool Sent = false;
     int PortNumber = 50000;
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+    std::shared_ptr<boost::asio::io_service> io_service;
 
     //Handle any errors while setting up the socket.
     try {
         //Setup socket.
-        SocketPtr = ConnectToSocket(PortNumber, argv);
+        io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
+        SocketPtr = ConnectToSocket(io_service, PortNumber, argv);
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
