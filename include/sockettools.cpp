@@ -126,7 +126,7 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
 
 std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, char* argv[]) {
     //Sets up the socket for us, and returns a shared pointer to it.
-    Logger.Debug("Socket Tools: ConnectToSocket(): Preparing to connect to a socket...");
+    Logger.Info("Socket Tools: ConnectToSocket(): Preparing to connect to a socket...");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
@@ -136,16 +136,16 @@ std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<bo
 
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
 
-    Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Attempting to connect...");
+    Logger.Info("Socket Tools: AttemptToReadFromSocket(): Attempting to connect...");
     boost::asio::connect(*Socket, endpoint_iterator);
 
-    Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Success. Returning Socket pointer...");
+    Logger.Info("Socket Tools: AttemptToReadFromSocket(): Success. Returning Socket pointer...");
     return Socket;
 }
 
 std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, string PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
-    Logger.Debug("Socket Tools: CreateSocket(): Creating a socket...");
+    Logger.Info("Socket Tools: CreateSocket(): Creating a socket...");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
@@ -154,10 +154,10 @@ std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
 
     //Wait for a connection.
-    Logger.Debug("Socket Tools: CreateSocket(): Waiting for a connection...");
+    Logger.Info("Socket Tools: CreateSocket(): Waiting for a connection...");
 
     acceptor.accept(*Socket);
 
-    Logger.Debug("Socket Tools: CreateSocket(): Success. Returning socket pointer...");
+    Logger.Info("Socket Tools: CreateSocket(): Success. Returning socket pointer...");
     return Socket;
 }

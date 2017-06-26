@@ -91,19 +91,24 @@ int main(int argc, char* argv[]) {
         AttemptToReadFromSocket(SocketPtr, InMessageQueue);
 
         //Check if there are any messages.
-        while (!InMessageQueue.empty()) {
-            if (Debug) {
-                std::cout << "Message from local client: " << ConvertToString(InMessageQueue.front()) << std::endl;
-            }
+        Logger.Debug("main(): Checking for messages...");
 
+        while (!InMessageQueue.empty()) {
+            Logger.Debug("main(): Message from local client: "+ConvertToString(InMessageQueue.front())+"...");
+
+            Logger.Debug("main(): Sending ACKnowledgement...");
             OutMessageQueue.push(ConvertToVectorChar("ACK"));
 
             //If the message was "Bye!", close the socket and make a new one.
             if (strcmp(ConvertToString(InMessageQueue.front()).c_str(), "Bye!") == 0) {
+                Logger.Debug("main(): Received GOODBYE from local client...");
+
                 //Give the output thread time to write the message.
-                //Send any pending messages.
+                //Send any pending messages. *** Should we just discard them? ***
+                Logger.Debug("main(): Sending any pending messages...");
                 SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
-                std::cout << "Client gone. Making a new socket..." << std::endl;
+
+                Logger.Info("main(): Client disconnected. Making a new socket and waiting for a connection...");
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
                 //Handle any errors while setting up the socket.
@@ -120,7 +125,7 @@ int main(int argc, char* argv[]) {
                 }
 
                 //We are now connected the the client. Start the handler thread to send messages back and forth.
-                std::cout << "Restarted." << std::endl;
+                Logger.Info("main(): We are now reconnected to the client...");
 
             }
 
@@ -129,13 +134,16 @@ int main(int argc, char* argv[]) {
         }
 
         //Send any pending messages.
+        Logger.Debug("main(): Sending any pending messages...");
         SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
 
         //Wait for 1 second before doing anything.
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
-    //Disconnected.
+    //Disconnected. *** Never runs at the moment. Add a way of making the server exit. Maybe handle Ctrl-C? ***
+    Logger.Debug("main(): Exiting...");
+
     std::cout << "Exiting..." << std::endl;
 
     RequestedExit = true;

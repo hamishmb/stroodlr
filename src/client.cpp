@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     std::cout << "Stroodlr Client " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Client "+Version+" Starting...");
 
-    Logger.Debug("main(): Starting message bus thread...");
+    Logger.Info("main(): Starting message bus thread...");
     std::thread t1(MessageBus, argv);
 
     string command;
@@ -128,14 +128,14 @@ int main(int argc, char* argv[])
         //Handle invalid/quit/no input from user.
         if (!std::cin) {
             //Invalid input.
-            Logger.Debug("main(): Invalid input. Asking for more input...");
+            Logger.Warning("main(): Invalid input. Asking for more input...");
             std::cout << std::endl << "Invalid input!" << std::endl;
             std::cin.clear();
             continue;
 
         } else if ((splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
             //User has requested that we exit.
-            Logger.Debug("main(): User requested an exit...");
+            Logger.Info("main(): User requested an exit...");
             break;
 
         } else if (splitcommand[0] == "") {
@@ -152,23 +152,23 @@ int main(int argc, char* argv[])
 
         //Handle "Proper" input.
         if (splitcommand[0] == "HISTORY") {
-            Logger.Debug("main(): Showing history...");
+            Logger.Info("main(): Showing history...");
             ShowHistory(UserInput);
 
         } else if (splitcommand[0] == "STATUS") {
-            Logger.Debug("main(): Showing status...");
+            Logger.Info("main(): Showing status...");
             ShowStatus();
 
         } else if (splitcommand[0] == "LISTSERV") {
-            Logger.Debug("main(): Listing connected servers...");
+            Logger.Info("main(): Listing connected servers...");
             ListConnectedServers();
 
         } else if (splitcommand[0] == "LSMSG") {
-            Logger.Debug("main(): Listing messages...");
+            Logger.Info("main(): Listing messages...");
             ListMessages(&InMessageQueue);
 
         } else if (splitcommand[0] == "HELP") {
-            Logger.Debug("main(): Showing help...");
+            Logger.Info("main(): Showing help...");
             ShowHelp();
 
         } else if (splitcommand[0] == "SEND") {
@@ -193,12 +193,12 @@ int main(int argc, char* argv[])
             }
 
             //Send it.
-            Logger.Debug("main(): Done. Sending it...");
+            Logger.Info("main(): Sending the message...");
             SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
-            Logger.Debug("main(): Done.");
+            Logger.Info("main(): Done.");
 
         } else {
-            Logger.Debug("main(): Invalid command.");
+            Logger.Error("main(): Invalid command.");
             std::cout << "ERROR: Command not recognised. Type \"HELP\" for commands." << std::endl;
         }
 
@@ -210,18 +210,18 @@ int main(int argc, char* argv[])
     }
 
     //Say goodbye to server.
-    Logger.Debug("main(): Saying goodbye to server...");
+    Logger.Info("main(): Saying goodbye to server...");
     SendToServer(ConvertToVectorChar("Bye!"), InMessageQueue, OutMessageQueue);
 
     //Exit if we broke out of the loop.
-    Logger.Debug("main(): Done. Saying goodbye to user and requesting that all threads exit...");
+    Logger.Info("main(): Done. Saying goodbye to user and requesting that all threads exit...");
 
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
 
     t1.join();
 
-    Logger.Debug("main(): All threads have exited. Exiting...");
+    Logger.Info("main(): All threads have exited. Exiting...");
     std::cout << "Exiting..." << std::endl;
 
     return 0;

@@ -79,6 +79,9 @@ void ShowHelp() {
     std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
     std::cout << std::endl;
     std::cout << std::endl;
+    std::cout << "HISTORY\t\t\tHISTORY\t\t\tShows command history (up to 100 commands)." << std::endl;
+    std::cout << "STATUS\t\t\tSTATUS\t\t\tOuputs a lot of client and server status information." << std::endl;
+    std::cout << "LISTSERV\t\t\tLISTSERV\t\t\tLists all connected servers." << std::endl;
     std::cout << "LSMSG\t\t\tLSMSG\t\t\tLists all messages, and clears them from the list." << std::endl;
     std::cout << "SEND\t\t\tSEND Test message\t\t\tSends a message (currently only to the local server)." << std::endl;
     std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
@@ -119,7 +122,7 @@ void ListMessages(queue<vector<char> > *In) {
 
 void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
     //Sends the given message to the local server and waits for an ACK(nowledgement). *** TODO If ACK is very slow, try again ***
-    Logger.Debug("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
+    Logger.Info("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
 
     //Push it to the message queue.
     Out.push(Msg);
@@ -129,7 +132,7 @@ void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char>
     while (In.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     //Remove the ACK from the queue.
-    Logger.Debug("Client Tools: SendToServer(): Done.");
+    Logger.Info("Client Tools: SendToServer(): Done.");
     In.pop();
 }
 
