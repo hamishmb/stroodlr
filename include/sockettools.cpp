@@ -124,14 +124,14 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
     }
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, char* argv[]) {
+std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, string ServerAddress) {
     //Sets up the socket for us, and returns a shared pointer to it.
     Logger.Info("Socket Tools: ConnectToSocket(): Preparing to connect to a socket...");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     tcp::resolver resolver(*io_service);
-    tcp::resolver::query query(argv[1], std::to_string(PortNumber));
+    tcp::resolver::query query(ServerAddress, std::to_string(PortNumber));
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
 
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));

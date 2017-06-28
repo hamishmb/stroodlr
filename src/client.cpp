@@ -45,14 +45,20 @@ void Usage() {
     //Prints cmdline options.
     std::cout << "Usage: stroodlc [OPTION]" << std::endl << std::endl << std::endl;
     std::cout << "Options:" << std::endl << std::endl;
-    std::cout << "        <hostnameOrIP> (Usually localhost)" << std::endl << std::endl;
+    std::cout << "        -h, --help:               Show this help message." << std::endl;
+    std::cout << "        -a, --serveraddress:      Specify the server address (if unspecified, assumed to be localhost)." << std::endl;
+    std::cout << "        -q, --quiet:              Show only warnings, errors and critical errors in the log file." << std::endl;
+    std::cout << "                                  Very unhelpful for debugging, and not recommended." << std::endl;
+    std::cout << "        -v, --verbose:            Enable logging of info messages, as well as warnings, errors and critical errors." << std::endl;
+    std::cout << "                                  Best choice if there is little disk space available. The default." << std::endl;
+    std::cout << "        -d, --debug:              Log lots of boring debug messages. Usually used for diagnostic purposes." << std::endl << std::endl;
     std::cout << "Stroodlr "+Version+" is released under the GNU GPL Version 3" << std::endl;
     std::cout << "Copyright (C) Hamish McIntyre-Bhatty 2017" << std::endl;
     exit(0);
 
 }
 
-void MessageBus(char* argv[]) {
+void MessageBus(string ServerAddress) {
     //Setup.
     bool Sent = false;
     int PortNumber = 50000;
@@ -63,7 +69,7 @@ void MessageBus(char* argv[]) {
     try {
         //Setup socket.
         io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
-        SocketPtr = ConnectToSocket(io_service, PortNumber, argv);
+        SocketPtr = ConnectToSocket(io_service, PortNumber, ServerAddress);
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -95,13 +101,75 @@ int main(int argc, char* argv[])
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
     Logger.SetFileName("/tmp/stroodlrc.log");
     Logger.SetStyle("Time Name Level");
-    Logger.SetLevel("Info");
 
     std::cout << "Stroodlr Client " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Client "+Version+" Starting...");
 
+    //Set default options.
+    Logger.SetLevel("Info");
+    string ServerAddress = "localhost";
+    string Temp;
+
+    //Parse commandline options.
+    try {
+        for (int i = 0; i < argc; i++) {
+            //Convert c_string to string.
+            Temp.assign(argv[i]);
+
+            //Skip any commandline values without options (eg "test" with an option like --text=).
+            if (Temp.substr(0, 1) != "-") {
+                continue;
+
+            } else if ((Temp == "-h") || (Temp == "--help")) {
+                //-h, --help.
+                Usage();
+
+            } else if ((Temp == "-a") || (Temp == "--serveraddress")) {
+                //-a, --serveraddress.
+                //Set server address to next element, if it exists.
+                if (i == argc - 1) {
+                    throw std::runtime_error("Option value not specified.");
+
+                }
+
+                Temp.assign(argv[i+1]);
+
+                //If not specified, exit.
+                if (Temp.substr(0, 1) == "-") {
+                    throw std::runtime_error("Option value not specified.");
+
+                }
+
+                //If we get here, we must be okay.
+                ServerAddress.assign(argv[i+1]);
+
+            } else if ((Temp == "-q") || (Temp == "--quiet")) {
+                //-q, --quiet.
+                Logger.SetLevel("Warning");
+
+            } else if ((Temp == "-v") || (Temp == "--verbose")) {
+                //-v, --verbose.
+                Logger.SetLevel("Info");
+
+            } else if ((Temp == "-d") || (Temp == "--debug")) {
+                //-d, --debug.
+                Logger.SetLevel("Debug");
+
+            } else {
+                //Invalid option.
+                throw std::runtime_error("Invalid option");
+
+            }
+        }
+    } catch (std::runtime_error const& e) {
+        //Print the error, print usage and exit.
+        std::cerr << e.what() << std::endl;
+        Usage();
+
+    }
+
     Logger.Info("main(): Starting message bus thread...");
-    std::thread t1(MessageBus, argv);
+    std::thread t1(MessageBus, ServerAddress);
 
     string command;
     vector<string> splitcommand;

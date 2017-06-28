@@ -43,7 +43,7 @@ project(stroodlrc)
 SET(GCC_CXX_COMPILE_FLAGS "-std=c++11")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_CXX_COMPILE_FLAGS}" )
 
-#Find BOOST.
+#Find BOOST. *** Add algorithm, asio ***
 FIND_PACKAGE(Boost COMPONENTS system REQUIRED )
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
@@ -64,8 +64,8 @@ project(stroodlrd)
 SET(GCC_CXX_COMPILE_FLAGS "-std=c++11")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_CXX_COMPILE_FLAGS}" )
 
-#Find BOOST.
-FIND_PACKAGE(Boost COMPONENTS system REQUIRED )
+#Find BOOST. *** Add algorithm, asio ***
+FIND_PACKAGE(Boost COMPONENTS system REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 #Find pthread.
