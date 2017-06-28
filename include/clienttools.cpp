@@ -76,17 +76,17 @@ void ShowHelp() {
     //Prints help information when requested by the user.
     Logger.Debug("Client Tools: ShowHelp(): Showing help information...");
 
-    std::cout << "Commands\t\t\tExamples\t\t\tExplanations" << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << "HISTORY\t\t\tHISTORY\t\t\tShows command history (up to 100 commands)." << std::endl;
-    std::cout << "STATUS\t\t\tSTATUS\t\t\tOuputs a lot of client and server status information." << std::endl;
-    std::cout << "LISTSERV\t\t\tLISTSERV\t\t\tLists all connected servers." << std::endl;
-    std::cout << "LSMSG\t\t\tLSMSG\t\t\tLists all messages, and clears them from the list." << std::endl;
-    std::cout << "SEND\t\t\tSEND Test message\t\t\tSends a message (currently only to the local server)." << std::endl;
-    std::cout << "HELP\t\t\tHELP\t\t\tShows this help text." << std::endl;
-    std::cout << "Q, QUIT, EXIT\t\t\tExits the program." << std::endl << std::endl;
-    
+    std::cout << "Help:" << std::endl << std::endl;
+    std::cout << "        HELP:                     Shows this help text." << std::endl;
+    std::cout << "        HISTORY:                  Shows command history (up to 100 commands)." << std::endl;
+    std::cout << "        STATUS:                   Outputs client and server status information." << std::endl;
+    std::cout << "        LISTSERV:                 Lists all connected servers." << std::endl;
+    std::cout << "        LSMSG:                    Lists all messages, and clears them." << std::endl;
+    std::cout << "        SEND <message>:           Sends a message (currently only to local server)." << std::endl;
+    std::cout << "        Q, QUIT, EXIT:            Exits the program." << std::endl << std::endl;
+    std::cout << "Stroodlr "+Version+" is released under the GNU GPL Version 3" << std::endl;
+    std::cout << "Copyright (C) Hamish McIntyre-Bhatty 2017" << std::endl << std::endl;
+
 }
 
 void CheckForMessages(queue<vector<char> > *In) {
