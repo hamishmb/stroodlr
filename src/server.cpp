@@ -44,9 +44,15 @@ bool Debug = true;
 
 void Usage() {
     //Prints cmdline options.
-    std::cout << "Usage: stroodld [OPTION]" << std::endl << std::endl << std::endl;
+    std::cout << "Usage: stroodlrd [OPTION]" << std::endl << std::endl << std::endl;
     std::cout << "Options:" << std::endl << std::endl;
-    std::cout << "        <portnumer> (suggested: 50000)" << std::endl << std::endl;
+    std::cout << "        -h, --help:               Show this help message." << std::endl;
+    std::cout << "        -p, --portnumber:         Specify the port number (default is 50000)." << std::endl;
+    std::cout << "        -q, --quiet:              Show only warnings, errors and critical errors in the log file." << std::endl;
+    std::cout << "                                  Very unhelpful for debugging, and not recommended." << std::endl;
+    std::cout << "        -v, --verbose:            Enable logging of info messages, as well as warnings, errors and critical errors." << std::endl;
+    std::cout << "                                  Best choice if there is little disk space available. The default." << std::endl;
+    std::cout << "        -d, --debug:              Log lots of boring debug messages. Usually used for diagnostic purposes." << std::endl << std::endl;
     std::cout << "Stroodlr "+Version+" is released under the GNU GPL Version 3" << std::endl;
     std::cout << "Copyright (C) Hamish McIntyre-Bhatty 2017" << std::endl;
     exit(0);
@@ -54,20 +60,77 @@ void Usage() {
 }
 
 int main(int argc, char* argv[]) {
-    //Error if we haven't been given a hostname or IP.
-    if (argc < 2) {
-        Usage();
-    }
-
-    //Setup the logger.
+    //Setup the logger. *** Handle exceptions ***
     Logger.SetName("Stroodlr Server "+Version);
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
     Logger.SetFileName("/tmp/stroodlrd.log");
     Logger.SetStyle("Time Name Level");
-    Logger.SetLevel("Info");
 
     std::cout << "Stroodlr Server " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Server "+Version+" Starting...");
+
+    //Set default options.
+    Logger.SetLevel("Info");
+    int PortNumber = 50000;
+    string Temp;
+
+    //Parse commandline options.
+    try {
+        for (int i = 0; i < argc; i++) {
+            //Convert c_string to a string.
+            Temp.assign(argv[i]);
+
+            //Skip any commandline values without options (eg "test" with an option like --text=).
+            if (Temp.substr(0, 1) != "-") {
+                continue;
+
+            } else if ((Temp == "-h") || (Temp == "--help")) {
+                //-h, --help.
+                Usage();
+
+            } else if ((Temp == "-p") || (Temp == "--portnumber")) {
+                //-p, --portnumber.
+                //Set portnumber to next element, if it exists.
+                if (i == argc - 1) {
+                    throw std::runtime_error("Option value not specified.");
+
+                }
+
+                Temp.assign(argv[i+1]);
+
+                //If not specified, exit.
+                if (Temp.substr(0, 1) == "-") {
+                    throw std::runtime_error("Option value not specified.");
+
+                }
+
+                //If we get here, we must be okay. *** Handle errors better here ***
+                PortNumber = std::stoi(Temp);
+
+            } else if ((Temp == "-q") || (Temp == "--quiet")) {
+                //-q, --quiet.
+                Logger.SetLevel("Warning");
+
+            } else if ((Temp == "-v") || (Temp == "--verbose")) {
+                //-v, --verbose.
+                Logger.SetLevel("Info");
+
+            } else if ((Temp == "-d") || (Temp == "--debug")) {
+                //-d, --debug.
+                Logger.SetLevel("Debug");
+
+            } else {
+                //Invalid option.
+                throw std::runtime_error("Invalid option");
+
+            }
+        }
+    } catch (std::runtime_error const& e) {
+        //Print the error, print usage and exit.
+        std::cerr << e.what() << std::endl;
+        Usage();
+
+    }
 
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
     std::shared_ptr<boost::asio::io_service> io_service;
@@ -76,7 +139,7 @@ int main(int argc, char* argv[]) {
     try {
         //Setup socket.
         io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
-        SocketPtr = CreateSocket(io_service, argv[1]);
+        SocketPtr = CreateSocket(io_service, PortNumber);
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -114,7 +177,7 @@ int main(int argc, char* argv[]) {
                 //Handle any errors while setting up the socket.
                 try {
                     //Setup socket.
-                    SocketPtr = CreateSocket(io_service, argv[1]);
+                    SocketPtr = CreateSocket(io_service, PortNumber);
 
                 } catch (boost::system::system_error const& e) {
                     std::cerr << "Error: " << e.what() << std::endl;

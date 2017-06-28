@@ -43,7 +43,7 @@ queue<vector<char> > InMessageQueue;
 
 void Usage() {
     //Prints cmdline options.
-    std::cout << "Usage: stroodlc [OPTION]" << std::endl << std::endl << std::endl;
+    std::cout << "Usage: stroodlrc [OPTION]" << std::endl << std::endl << std::endl;
     std::cout << "Options:" << std::endl << std::endl;
     std::cout << "        -h, --help:               Show this help message." << std::endl;
     std::cout << "        -a, --serveraddress:      Specify the server address (if unspecified, assumed to be localhost)." << std::endl;
@@ -91,11 +91,6 @@ void MessageBus(string ServerAddress) {
 
 int main(int argc, char* argv[])
 {
-    //Error if we haven't been given a hostname or IP.
-    if (argc < 2) {
-        Usage();
-    }
-
     //Setup the logger. *** Handle exceptions ***
     Logger.SetName("Stroodlr Client "+Version);
     Logger.SetDateTimeFormat("%d/%m/%Y %I:%M:%S %p");
@@ -113,7 +108,7 @@ int main(int argc, char* argv[])
     //Parse commandline options.
     try {
         for (int i = 0; i < argc; i++) {
-            //Convert c_string to string.
+            //Convert c_string to a string.
             Temp.assign(argv[i]);
 
             //Skip any commandline values without options (eg "test" with an option like --text=).

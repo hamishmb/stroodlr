@@ -143,13 +143,13 @@ std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<bo
     return Socket;
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, string PortNumber) {
+std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
     Logger.Info("Socket Tools: CreateSocket(): Creating a socket...");
 
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
-    tcp::acceptor acceptor(*io_service, tcp::endpoint(tcp::v4(), std::stoi(PortNumber)));
+    tcp::acceptor acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber));
 
     Socket = std::shared_ptr<boost::asio::ip::tcp::socket>(new boost::asio::ip::tcp::socket(*io_service));
 
