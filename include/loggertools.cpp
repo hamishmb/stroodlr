@@ -180,7 +180,9 @@ string Logging::FormatMessage(string OrigMessage, string Level) {
 //---------- Logging Functions ----------
 bool Logging::Debug(string Message) {
     if (ShowDebug) {
+        LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "DEBUG") << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();
@@ -188,7 +190,9 @@ bool Logging::Debug(string Message) {
 
 bool Logging::Info(string Message) {
     if (ShowInfo) {
+        LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "INFO") << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();
@@ -196,7 +200,9 @@ bool Logging::Info(string Message) {
 
 bool Logging::Warning(string Message) {
     if (ShowWarning) {
+        LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "WARNING") << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();
@@ -204,7 +210,9 @@ bool Logging::Warning(string Message) {
 
 bool Logging::Error(string Message) {
     if (ShowError) {
+        LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "ERROR") << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();
@@ -214,8 +222,10 @@ bool Logging::ErrorWCerr(string Message) {
     if (ShowError) {
         string AboutToWrite;
         AboutToWrite = FormatMessage(Message, "ERROR");
+        LoggerMutex.lock();
         std::cerr << AboutToWrite << std::endl;
         FileHandle << AboutToWrite << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();
@@ -223,7 +233,9 @@ bool Logging::ErrorWCerr(string Message) {
 
 bool Logging::Critical(string Message) {
     if (ShowCritical) {
+        LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "CRITICAL") << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();
@@ -233,8 +245,10 @@ bool Logging::CriticalWCerr(string Message) {
     if (ShowCritical) {
         string AboutToWrite;
         AboutToWrite = FormatMessage(Message, "CRITICAL");
+        LoggerMutex.lock();
         std::cerr << AboutToWrite << std::endl;
         FileHandle << AboutToWrite << std::endl;
+        LoggerMutex.unlock();
     }
 
     return FileHandle.good();

@@ -17,6 +17,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <fstream>
 #include <string>
+#include <mutex>
 
 //Class definitions.
 class Logging {
@@ -55,6 +56,7 @@ private:
     std::string File;
     std::ofstream FileHandle;
     std::string MessageStyle;
+    std::mutex LoggerMutex;
 
     //Logging level variables. Default level is Debug.
     bool ShowDebug = true;
