@@ -20,6 +20,8 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <vector>
 #include <ctime>
+#include <stdexcept>
+
 #include "loggertools.h"
 #include "tools.h"
 
