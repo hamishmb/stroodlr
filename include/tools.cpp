@@ -30,7 +30,7 @@ bool RequestedExit = false;
 
 //Global.
 string Version = "0.9";
-string ReleaseDate = "26/6/2017";
+string ReleaseDate = "28/6/2017";
 
 string ConvertToString(vector<char> Vec) {
     //Converts a vector<char> to a string to make it easy to read and process.

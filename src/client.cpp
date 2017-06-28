@@ -41,6 +41,8 @@ Logging Logger;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
+bool ReadyForTransmission = false;
+
 void Usage() {
     //Prints cmdline options.
     std::cout << "Usage: stroodlrc [OPTION]" << std::endl << std::endl << std::endl;
@@ -67,16 +69,19 @@ void MessageBus(string ServerAddress) {
 
     //Handle any errors while setting up the socket.
     try {
-        //Setup socket.
+        //Setup socket and connect.
         io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
         SocketPtr = ConnectToSocket(io_service, PortNumber, ServerAddress);
 
-    } catch (boost::system::system_error const& e) {
+        //We are now connected.
+        ReadyForTransmission = true;
+
+    } catch (boost::system::system_error const& e) { //*** change readyfortransmission? ***
         std::cerr << "Error: " << e.what() << std::endl;
         std::cerr << "Exiting..." << std::endl;
 
-        //TODO Handle better later.
-        return;
+        //TODO Handle better later. *** Don't crash if this happens, exit gracefully ***
+        throw std::runtime_error("Couldn't connect to server!");
     }
 
     while (!::RequestedExit) {
@@ -171,9 +176,18 @@ int main(int argc, char* argv[])
     deque<string> UserInput;
     string abouttosend;
 
+    Logger.Info("main(): Waiting for connection to server...");
+    std::cout << std::endl << "Connecting to server..." << std::endl;
+
+    //Wait until we're connected.
+    while (!ReadyForTransmission) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    Logger.Info("main(): Connected...");
+    std::cout << "Connected!" << std::endl;
+
     //Greet user and start waiting for commands.
     //Display greeting.
-    std::cout << "Welcome to Stroodlr, the local network chat client!" << std::endl;
+    std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
     std::cout << "For help, type \"HELP\"" << std::endl;
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
