@@ -212,13 +212,23 @@ int main(int argc, char* argv[])
             abouttosend = "";
 
             for (int i = 0; i < splitcommand.size(); i++) {
-                if (i != splitcommand.size()) {
+                if (i != splitcommand.size() - 1) {
                     abouttosend = abouttosend + splitcommand[i] + " ";
 
                 } else {
                     abouttosend = abouttosend + splitcommand[i];
 
                 }
+            }
+
+            //Check this isn't a control message used for client-server communication.
+            if (abouttosend == "CLIENTGOODBYE") {
+                //Refuse to send it.
+                Logger.Error("main(): Won't send control message CLIENTGOODBYE. Warning user...");
+                std::cout << std::endl << "You cannot send control messages." << std::endl << std::endl;
+
+                continue;
+
             }
 
             //Send it.
