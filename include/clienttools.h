@@ -29,3 +29,4 @@ void CheckForMessages(std::queue<std::vector<char> > *In);
 void ListMessages(std::queue<std::vector<char> > *In);
 void SendToServer(std::vector<char> Msg, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
 bool ConnectedToServer(std::queue<std::vector<char> >& InMessageQueue);
+std::string ParseCmdlineOptions(std::string& ServerAddress, int argc, char* argv[]);

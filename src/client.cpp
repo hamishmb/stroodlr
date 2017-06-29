@@ -108,59 +108,11 @@ int main(int argc, char* argv[])
     //Set default options.
     Logger.SetLevel("Info");
     string ServerAddress = "localhost";
-    string Temp;
 
-    //Parse commandline options.
+    //Parse the commandline options.
     try {
-        for (int i = 0; i < argc; i++) {
-            //Convert c_string to a string.
-            Temp.assign(argv[i]);
+        ServerAddress = ParseCmdlineOptions(ServerAddress, argc, argv);
 
-            //Skip any commandline values without options (eg "test" with an option like --text=).
-            if (Temp.substr(0, 1) != "-") {
-                continue;
-
-            } else if ((Temp == "-h") || (Temp == "--help")) {
-                //-h, --help.
-                Usage();
-
-            } else if ((Temp == "-a") || (Temp == "--serveraddress")) {
-                //-a, --serveraddress.
-                //Set server address to next element, if it exists.
-                if (i == argc - 1) {
-                    throw std::runtime_error("Option value not specified.");
-
-                }
-
-                Temp.assign(argv[i+1]);
-
-                //If not specified, exit.
-                if (Temp.substr(0, 1) == "-") {
-                    throw std::runtime_error("Option value not specified.");
-
-                }
-
-                //If we get here, we must be okay.
-                ServerAddress.assign(argv[i+1]);
-
-            } else if ((Temp == "-q") || (Temp == "--quiet")) {
-                //-q, --quiet.
-                Logger.SetLevel("Warning");
-
-            } else if ((Temp == "-v") || (Temp == "--verbose")) {
-                //-v, --verbose.
-                Logger.SetLevel("Info");
-
-            } else if ((Temp == "-d") || (Temp == "--debug")) {
-                //-d, --debug.
-                Logger.SetLevel("Debug");
-
-            } else {
-                //Invalid option.
-                throw std::runtime_error("Invalid option");
-
-            }
-        }
     } catch (std::runtime_error const& e) {
         //Print the error, print usage and exit.
         std::cerr << e.what() << std::endl;

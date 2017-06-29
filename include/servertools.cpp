@@ -46,3 +46,61 @@ bool ConnectedToClient(queue<vector<char> >& InMessageQueue) { //** Test the soc
     return (SplitVec[0] != "Error:"); //As long at the message doesn't start with an error, we should be connected.
 
 }
+
+int ParseCmdlineOptions(int PortNumber, int argc, char* argv[]) {
+    //Parse commandline options.
+    string Temp;
+
+    for (int i = 0; i < argc; i++) {
+        //Convert c_string to a string.
+        Temp.assign(argv[i]);
+
+        //Skip any commandline values without options (eg "test" with an option like --text=).
+        if (Temp.substr(0, 1) != "-") {
+            continue;
+
+        } else if ((Temp == "-h") || (Temp == "--help")) {
+            //-h, --help.
+            throw std::runtime_error("User requested help.");
+
+        } else if ((Temp == "-p") || (Temp == "--portnumber")) {
+            //-p, --portnumber.
+            //Set portnumber to next element, if it exists.
+            if (i == argc - 1) {
+                throw std::runtime_error("Option value not specified.");
+
+            }
+
+            Temp.assign(argv[i+1]);
+
+            //If not specified, exit.
+            if (Temp.substr(0, 1) == "-") {
+                throw std::runtime_error("Option value not specified.");
+
+            }
+
+            //If we get here, we must be okay. *** Handle errors better here ***
+            PortNumber = std::stoi(Temp);
+
+        } else if ((Temp == "-q") || (Temp == "--quiet")) {
+            //-q, --quiet.
+            Logger.SetLevel("Warning");
+
+        } else if ((Temp == "-v") || (Temp == "--verbose")) {
+            //-v, --verbose.
+            Logger.SetLevel("Info");
+
+        } else if ((Temp == "-d") || (Temp == "--debug")) {
+            //-d, --debug.
+            Logger.SetLevel("Debug");
+
+        } else {
+            //Invalid option.
+            throw std::runtime_error("Invalid option");
+
+        }
+    }
+
+    //Return the port number in case it has changed.
+    return PortNumber;
+}
