@@ -39,9 +39,6 @@ Logging Logger;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
-//Options. TODO use cmdline flags to set.
-bool Debug = true;
-
 void Usage() {
     //Prints cmdline options.
     std::cout << "Usage: stroodlrd [OPTION]" << std::endl << std::endl << std::endl;
@@ -115,8 +112,8 @@ int main(int argc, char* argv[]) {
             Logger.Debug("main(): Sending ACKnowledgement...");
             OutMessageQueue.push(ConvertToVectorChar("ACK"));
 
-            //If the message was "Bye!", close the socket and make a new one.
-            if (strcmp(ConvertToString(InMessageQueue.front()).c_str(), "Bye!") == 0) {
+            //If the message was "CLIENTGOODBYE", close the socket and make a new one. *** Why can't I do string comparison here? ***
+            if (strcmp(ConvertToString(InMessageQueue.front()).c_str(), "CLIENTGOODBYE") == 0) {
                 Logger.Debug("main(): Received GOODBYE from local client...");
 
                 //Give the output thread time to write the message.

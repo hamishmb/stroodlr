@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
 
     //Say goodbye to server.
     Logger.Info("main(): Saying goodbye to server...");
-    SendToServer(ConvertToVectorChar("Bye!"), InMessageQueue, OutMessageQueue);
+    SendToServer(ConvertToVectorChar("CLIENTGOODBYE"), InMessageQueue, OutMessageQueue);
 
     //Exit if we broke out of the loop.
     Logger.Info("main(): Done. Saying goodbye to user and requesting that all threads exit...");
