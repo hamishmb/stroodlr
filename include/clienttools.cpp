@@ -76,7 +76,7 @@ void ShowHelp() {
     //Prints help information when requested by the user.
     Logger.Debug("Client Tools: ShowHelp(): Showing help information...");
 
-    std::cout << "Help:" << std::endl << std::endl;
+    std::cout << "Help (all commands are case-insensitive):" << std::endl << std::endl;
     std::cout << "        HELP:                     Shows this help text." << std::endl;
     std::cout << "        HISTORY:                  Shows command history (up to 100 commands)." << std::endl;
     std::cout << "        STATUS:                   Outputs client and server status information." << std::endl;

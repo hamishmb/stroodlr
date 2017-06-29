@@ -23,6 +23,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <chrono>
 #include <thread>
+#include <cctype>
 
 //Custom headers.
 #include "../include/tools.h"
@@ -127,6 +128,7 @@ int main(int argc, char* argv[])
     vector<string> splitcommand;
     deque<string> UserInput;
     string abouttosend;
+    string UpperCommand;
 
     Logger.Info("main(): Waiting for connection to server...");
     std::cout << std::endl << "Connecting to server..." << std::endl;
@@ -153,6 +155,12 @@ int main(int argc, char* argv[])
         Logger.Debug("main(): Waiting for user input...");
         getline(std::cin, command);
         splitcommand = split(command, " ");
+
+        //Convert the first part of the text (the "command") to upper case.
+        for (int i = 0; i < splitcommand[0].size(); i++) {
+            splitcommand[0][i] = static_cast<char>(toupper(splitcommand[0][i]));
+
+        }
 
         //Handle invalid/quit/no input from user.
         if (!std::cin) {
