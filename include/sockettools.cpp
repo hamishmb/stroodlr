@@ -51,6 +51,7 @@ void ClientSocket::CreateSocket() {
     Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Creating the socket...");
 
     //DNS resolution.
+    io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
     tcp::resolver resolver(*io_service);
     tcp::resolver::query query(ServerAddress, std::to_string(PortNumber));
     endpoint_iterator = resolver.resolve(query);

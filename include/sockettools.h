@@ -16,6 +16,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //Includes.
+#include <iostream>
 #include <string>
 #include <queue>
 #include <vector>
@@ -25,7 +26,14 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 class ClientSocket {
 public:
     //Default constructor.
-    ClientSocket() {};
+    ClientSocket() {}
+
+    //Destructor.
+    ~ClientSocket() {
+        Socket = nullptr;
+        io_service = nullptr;     
+
+    }
 
     //Other constructors.
     ClientSocket(const ClientSocket& that) = delete; //Don't allow the copy constructor, because it's often dangerous to allow multiple references to a socket.
@@ -37,7 +45,6 @@ public:
     void SetServerAddress(const std::string& ServerAdd);
 
     //Connection functions.
-    //For the client.
     void CreateSocket();
     void WaitForSocketToConnect();
 
@@ -75,7 +82,7 @@ public:
 private:
     //Variables.
     int PortNumber;
-    std::string ServerAddress; //Only used when connecting to an acceptor.
+    std::string ServerAddress;
     std::shared_ptr<boost::asio::io_service> io_service;
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 

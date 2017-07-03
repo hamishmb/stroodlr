@@ -66,13 +66,19 @@ void MessageBus(string ServerAddress) {
     bool Sent = false;
     int PortNumber = 50000;
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-    std::shared_ptr<boost::asio::io_service> io_service;
 
-    //Handle any errors while setting up the socket.
+    //Setup socket.
+    ClientSocket Socket;
+
+    Socket.SetPortNumber(PortNumber);
+    Socket.SetServerAddress(ServerAddress);
+
+    //Handle any errors while connecting.
     try {
-        //Setup socket and connect.
-        io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
-        SocketPtr = ConnectToSocket(io_service, PortNumber, ServerAddress);
+        Socket.CreateSocket();
+        Socket.WaitForSocketToConnect();
+
+        SocketPtr = *Socket;
 
         //We are now connected.
         ReadyForTransmission = true;
@@ -93,6 +99,8 @@ void MessageBus(string ServerAddress) {
         AttemptToReadFromSocket(SocketPtr, InMessageQueue);
 
     }
+
+    SocketPtr = nullptr;
 }
 
 int main(int argc, char* argv[])
