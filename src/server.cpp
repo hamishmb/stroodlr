@@ -83,13 +83,19 @@ int main(int argc, char* argv[]) {
     }
 
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-    std::shared_ptr<boost::asio::io_service> io_service;
+
+    //Setup socket.
+    ServerSocket Socket;
+
+    Socket.SetPortNumber(PortNumber);
 
     //Handle any errors while setting up the socket.
     try {
         //Setup socket.
-        io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
-        SocketPtr = CreateSocket(io_service, PortNumber);
+        Socket.CreateSocket();
+        Socket.WaitForSocketToConnect();
+
+        SocketPtr = *Socket;
 
     } catch (boost::system::system_error const& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -124,10 +130,18 @@ int main(int argc, char* argv[]) {
                 Logger.Info("main(): Client disconnected. Making a new socket and waiting for a connection...");
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
+                //Setup socket. *** Won't work right now, need to change how this works so old one goes out of scope/gets overwritten when we create the new one ***
+                ServerSocket Socket;
+
+                Socket.SetPortNumber(PortNumber);
+
                 //Handle any errors while setting up the socket.
                 try {
                     //Setup socket.
-                    SocketPtr = CreateSocket(io_service, PortNumber);
+                    Socket.CreateSocket();
+                    Socket.WaitForSocketToConnect();
+
+                    SocketPtr = *Socket;
 
                 } catch (boost::system::system_error const& e) {
                     std::cerr << "Error: " << e.what() << std::endl;

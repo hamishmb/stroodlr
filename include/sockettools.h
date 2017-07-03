@@ -52,7 +52,7 @@ private:
     //Variables.
     int PortNumber;
     std::string ServerAddress;
-    std::shared_ptr<boost::asio::io_service> io_service;
+    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     //Boost core variables.
@@ -66,6 +66,13 @@ public:
     //Default constructor.
     ServerSocket() {};
 
+    //Destructor.
+    ~ServerSocket() {
+        Socket = nullptr;
+        io_service = nullptr;
+
+    }
+
     //Other constructors.
     ServerSocket(const ServerSocket& that) = delete; //Don't allow the copy constructor, because it's often dangerous to allow multiple references to a socket.
     ServerSocket operator = (const ServerSocket& rhs) = delete; //Comparisons are pointless;
@@ -73,21 +80,19 @@ public:
 
     //Setup functions.
     void SetPortNumber(const int& PortNo);
-    void SetServerAddress(const std::string& ServerAdd);
 
     //Connection functions.
-    void CreateAcceptorSocket();
-    void WaitForAcceptorSocketToConnect();
+    void CreateSocket();
+    void WaitForSocketToConnect();
 
 private:
     //Variables.
     int PortNumber;
-    std::string ServerAddress;
-    std::shared_ptr<boost::asio::io_service> io_service;
+    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     //Boost core variables.
-    boost::asio::ip::tcp::acceptor* acceptorptr;
+    std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
 
 };
 

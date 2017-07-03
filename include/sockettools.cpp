@@ -51,7 +51,6 @@ void ClientSocket::CreateSocket() {
     Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Creating the socket...");
 
     //DNS resolution.
-    io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
     tcp::resolver resolver(*io_service);
     tcp::resolver::query query(ServerAddress, std::to_string(PortNumber));
     endpoint_iterator = resolver.resolve(query);
@@ -78,28 +77,38 @@ std::shared_ptr<tcp::socket> ClientSocket::operator * () {
 
 }
 
-void ServerSocket::CreateAcceptorSocket() {
-    //Sets up the socket for us, and returns a shared pointer to it.
-    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Creating a socket...");
-
-    //tcp::acceptor acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber));
-
-    //acceptorptr* = &acceptor;
-
-    //Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
-
-    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Done!");
+//Define ServerSocket's functions.
+//---------- Setup Functions ----------
+void ServerSocket::SetPortNumber(const int& PortNo) {
+    PortNumber = PortNo;
 
 }
 
-void ServerSocket::WaitForAcceptorSocketToConnect() {
-    //Waits until the acceptor socket is connected.
-    //Wait for a connection.
-    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Waiting for a connection...");
+//---------- Connection Functions ----------
+void ServerSocket::CreateSocket() {
+    //Sets up the socket for us, and returns a shared pointer to it.
+    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Creating the socket...");
 
-    //acceptor->accept(*Socket);
+    acceptor = std::shared_ptr<tcp::acceptor>(new tcp::acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber)));
+    Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
 
-    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Done.");
+    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Done!");
+
+}
+
+void ServerSocket::WaitForSocketToConnect() {
+    //Waits until the socket has connected to an acceptor socket.
+    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Attempting to connect to acceptor socket...");
+    acceptor->accept(*Socket);
+
+    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Done!");
+
+}
+
+//---------- Operators ----------
+std::shared_ptr<tcp::socket> ServerSocket::operator * () {
+    //Return the socket.
+    return Socket;
 
 }
 
