@@ -28,11 +28,11 @@ using std::queue;
 //Shared globally. Used to tell threads to exit when the program is about to quit.
 bool RequestedExit = false;
 
-//Global.
-string Version = "0.9";
-string ReleaseDate = "28/6/2017";
+//Global. Must explicitly declare external linkage for constants if shared between files and header not included.
+extern const string Version = "0.9";
+extern const string ReleaseDate = "3/7/2017";
 
-string ConvertToString(vector<char> Vec) {
+string ConvertToString(const vector<char>& Vec) {
     //Converts a vector<char> to a string to make it easy to read and process.
     std::string tempstring;
 
@@ -44,7 +44,7 @@ string ConvertToString(vector<char> Vec) {
     return tempstring;
 }
 
-vector<char> ConvertToVectorChar(string Str) {
+vector<char> ConvertToVectorChar(const string& Str) {
     //Converts a string to a vector<char> so it can be put on a message queue.
     vector<char> tempvec;
 
@@ -55,7 +55,7 @@ vector<char> ConvertToVectorChar(string Str) {
     return tempvec;
 }
 
-vector<string> split(const string& mystring, string delimiters) {
+vector<string> split(const string& mystring, const string delimiters) {
     ///Splits a string into a vector<string> with delimiters.
     std::vector<std::string> splitstring;
     boost::split(splitstring, mystring, boost::is_any_of(delimiters));

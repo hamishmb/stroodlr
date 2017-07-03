@@ -31,7 +31,7 @@ using boost::asio::ip::tcp;
 //Allow us to use the logger here.
 extern Logging Logger;
 
-int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, queue<vector<char> >& In, queue<vector<char> >& Out) {
+int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, queue<vector<char> >& In, queue<vector<char> >& Out) {
     //Sends any messages waiting in the message queue.
     Logger.Debug("Socket Tools: SendAnyPendingMessages(): Sending any pending messages...");
 
@@ -66,7 +66,7 @@ int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket,
     return true;
 }
 
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, queue<vector<char> >& In) {
+void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, queue<vector<char> >& In) {
     //Attempts to read some data from the socket.
     Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Attempting to read some data from the socket...");
 
@@ -124,7 +124,7 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socke
     }
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, string ServerAddress) {
+std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> const io_service, const int& PortNumber, const string& ServerAddress) {
     //Sets up the socket for us, and returns a shared pointer to it.
     Logger.Info("Socket Tools: ConnectToSocket(): Preparing to connect to a socket...");
 
@@ -143,7 +143,7 @@ std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<bo
     return Socket;
 }
 
-std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber) {
+std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> const io_service, const int& PortNumber) {
     //Sets up the socket for us, and returns a shared pointer to it.
     Logger.Info("Socket Tools: CreateSocket(): Creating a socket...");
 

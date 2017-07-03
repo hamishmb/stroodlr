@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
     //Parse commandline options.
     try {
-        PortNumber = ParseCmdlineOptions(PortNumber, argc, argv);
+        ParseCmdlineOptions(PortNumber, argc, argv);
 
     } catch (std::runtime_error const& e) {
         //Print the error, print usage and exit.

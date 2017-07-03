@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
 
         } else if (splitcommand[0] == "LSMSG") {
             Logger.Info("main(): Listing messages...");
-            ListMessages(&InMessageQueue);
+            ListMessages(InMessageQueue);
 
         } else if (splitcommand[0] == "HELP") {
             Logger.Info("main(): Showing help...");

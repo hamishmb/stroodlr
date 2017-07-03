@@ -89,7 +89,7 @@ void ShowHelp() {
 
 }
 
-void CheckForMessages(queue<vector<char> > *In) {
+void CheckForMessages(const queue<vector<char> > *In) {
     //Check if there are any messages, and notifies user if so.
     Logger.Debug("Client Tools: CheckForMessages(): Checking for messages...");
 
@@ -100,27 +100,27 @@ void CheckForMessages(queue<vector<char> > *In) {
     }
 }
 
-void ListMessages(queue<vector<char> > *In) {
+void ListMessages(queue<vector<char> >& In) {
     Logger.Debug("Client Tools: ListMessages(): Listing any messages...");
 
-    if (In->empty()) {
+    if (In.empty()) {
         Logger.Debug("Client Tools: ListMessages(): No messages.");
         std::cout << "No messages." << std::endl;
         return;
     }
 
     //List all messages.
-    while (!In->empty()) {
+    while (!In.empty()) {
         //Convert each message to a string and then print it.
-        std::cout << std::endl << ConvertToString(In->front()) << std::endl;
-        In->pop();
+        std::cout << std::endl << ConvertToString(In.front()) << std::endl;
+        In.pop();
     }
 
     Logger.Debug("Client Tools: ListMessages(): Done.");
     std::cout << "End of messages." << std::endl << std::endl;
 }
 
-void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
+void SendToServer(const vector<char>& Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
     //Sends the given message to the local server and waits for an ACK(nowledgement). *** TODO If ACK is very slow, try again ***
     Logger.Info("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
 
@@ -136,7 +136,7 @@ void SendToServer(vector<char> Msg, queue<vector<char> >& In, queue<vector<char>
     In.pop();
 }
 
-bool ConnectedToServer(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
+bool ConnectedToServer(const queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.
     Logger.Debug("Client Tools: ConnectedToServer(): Checking we're still connected to the server...");
 
@@ -153,7 +153,7 @@ bool ConnectedToServer(queue<vector<char> >& InMessageQueue) { //** Test the soc
 
 }
 
-string ParseCmdlineOptions(string& ServerAddress, int argc, char* argv[]) {
+string ParseCmdlineOptions(string& ServerAddress, const int& argc, char* argv[]) {
     //Parse commandline options.
     string Temp;
 

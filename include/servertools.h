@@ -18,5 +18,5 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 //Function declarations.
-bool ConnectedToClient(std::queue<std::vector<char> >& InMessageQueue);
-int ParseCmdlineOptions(int PortNumber, int argc, char* argv[]);
+bool ConnectedToClient(const std::queue<std::vector<char> >& InMessageQueue);
+void ParseCmdlineOptions(int& PortNumber, const int& argc, char* argv[]);

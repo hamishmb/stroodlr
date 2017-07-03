@@ -26,11 +26,11 @@ public:
     Logging() : Name("") {}
 
     //Setup functions.
-    void SetName(std::string LoggerName);
-    void SetDateTimeFormat(std::string Format);
-    void SetFileName(std::string FileName);
-    void SetStyle(std::string Style);
-    void SetLevel(std::string Level);
+    void SetName(const std::string& LoggerName);
+    void SetDateTimeFormat(const std::string& Format);
+    void SetFileName(const std::string& FileName);
+    void SetStyle(const std::string& Style);
+    void SetLevel(const std::string& Level);
 
     //Config getter functions.
     std::string GetName();
@@ -40,13 +40,13 @@ public:
     std::string GetLevel();
 
     //Logging functions.
-    bool Debug(std::string Message);
-    bool Info(std::string Message);
-    bool Warning(std::string Message);
-    bool Error(std::string Message);
-    bool ErrorWCerr(std::string Message);
-    bool Critical(std::string Message);
-    bool CriticalWCerr(std::string Message);
+    bool Debug(const std::string& Message);
+    bool Info(const std::string& Message);
+    bool Warning(const std::string& Message);
+    bool Error(const std::string& Message);
+    bool ErrorWCerr(const std::string& Message);
+    bool Critical(const std::string& Message);
+    bool CriticalWCerr(const std::string& Message);
 
 private:
     //Variables.
@@ -67,5 +67,5 @@ private:
 
     //Private function declarations.
     void GetTime();
-    std::string FormatMessage(std::string OrigMessage, std::string Level);
+    std::string FormatMessage(const std::string& OrigMessage, const std::string& Level);
 };

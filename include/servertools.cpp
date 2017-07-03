@@ -30,7 +30,7 @@ using std::string;
 //Allow us to use the logger here.
 extern Logging Logger;
 
-bool ConnectedToClient(queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
+bool ConnectedToClient(const queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.
     Logger.Debug("Server Tools: ConnectedToClient(): Checking we're still connected to the client...");
 
@@ -47,7 +47,7 @@ bool ConnectedToClient(queue<vector<char> >& InMessageQueue) { //** Test the soc
 
 }
 
-int ParseCmdlineOptions(int PortNumber, int argc, char* argv[]) {
+void ParseCmdlineOptions(int& PortNumber, const int& argc, char* argv[]) {
     //Parse commandline options.
     string Temp;
 
@@ -100,7 +100,4 @@ int ParseCmdlineOptions(int PortNumber, int argc, char* argv[]) {
 
         }
     }
-
-    //Return the port number in case it has changed.
-    return PortNumber;
 }

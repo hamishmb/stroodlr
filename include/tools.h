@@ -21,11 +21,11 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 //Function prototypes.
-std::string ConvertToString(std::vector<char> Vec);
-std::vector<char> ConvertToVectorChar(std::string Str);
-std::vector<std::string> split(const std::string& mystring, std::string delimiters);
+std::string ConvertToString(const std::vector<char>& Vec);
+std::vector<char> ConvertToVectorChar(const std::string& Str);
+std::vector<std::string> split(const std::string& mystring, const std::string delimiters);
 
 //Global data.
 extern bool RequestedExit;
-extern std::string Version;
-extern std::string ReleaseDate;
+extern const std::string Version;
+extern const std::string ReleaseDate;

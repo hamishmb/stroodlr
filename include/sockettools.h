@@ -22,7 +22,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 
 //Function declarations.
-int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> Socket, std::queue<std::vector<char> >& In);
-std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber, std::string ServerAddress);
-std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> io_service, int PortNumber);
+int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
+void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, std::queue<std::vector<char> >& In);
+std::shared_ptr<boost::asio::ip::tcp::socket> ConnectToSocket(std::shared_ptr<boost::asio::io_service> const io_service, const int& PortNumber, const std::string& ServerAddress);
+std::shared_ptr<boost::asio::ip::tcp::socket> CreateSocket(std::shared_ptr<boost::asio::io_service> const io_service, const int& PortNumber);

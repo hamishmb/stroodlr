@@ -30,15 +30,15 @@ using std::vector;
 
 //Define the Logging class's functions.
 //---------- Setup functions ----------
-void Logging::SetName(string LoggerName) {
+void Logging::SetName(const string& LoggerName) {
     Name = LoggerName;
 }
 
-void Logging::SetDateTimeFormat(string Format) {
+void Logging::SetDateTimeFormat(const string& Format) {
     DateTimeFormat = Format;
 }
 
-void Logging::SetFileName(string FileName) {
+void Logging::SetFileName(const string& FileName) {
     File = FileName;
     FileHandle.open(FileName, std::ios_base::out);
 
@@ -47,11 +47,11 @@ void Logging::SetFileName(string FileName) {
     }
 }
 
-void Logging::SetStyle(string Style) {
+void Logging::SetStyle(const string& Style) {
     MessageStyle = Style;
 }
 
-void Logging::SetLevel(string Level) {
+void Logging::SetLevel(const string& Level) {
     if (Level == "Debug") {
         ShowDebug = true;
         ShowInfo = true;
@@ -143,7 +143,7 @@ void Logging::GetTime() {
     strftime(TempTimeHolder, 256, DateTimeFormat.c_str(), PToTMStruct);
 }
 
-string Logging::FormatMessage(string OrigMessage, string Level) {
+string Logging::FormatMessage(const string& OrigMessage, const string& Level) {
     string Message;
     vector<string> SplitStyle;
 
@@ -180,7 +180,7 @@ string Logging::FormatMessage(string OrigMessage, string Level) {
 }
 
 //---------- Logging Functions ----------
-bool Logging::Debug(string Message) {
+bool Logging::Debug(const string& Message) {
     if (ShowDebug) {
         LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "DEBUG") << std::endl;
@@ -190,7 +190,7 @@ bool Logging::Debug(string Message) {
     return FileHandle.good();
 }
 
-bool Logging::Info(string Message) {
+bool Logging::Info(const string& Message) {
     if (ShowInfo) {
         LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "INFO") << std::endl;
@@ -200,7 +200,7 @@ bool Logging::Info(string Message) {
     return FileHandle.good();
 }
 
-bool Logging::Warning(string Message) {
+bool Logging::Warning(const string& Message) {
     if (ShowWarning) {
         LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "WARNING") << std::endl;
@@ -210,7 +210,7 @@ bool Logging::Warning(string Message) {
     return FileHandle.good();
 }
 
-bool Logging::Error(string Message) {
+bool Logging::Error(const string& Message) {
     if (ShowError) {
         LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "ERROR") << std::endl;
@@ -220,7 +220,7 @@ bool Logging::Error(string Message) {
     return FileHandle.good();
 }
 
-bool Logging::ErrorWCerr(string Message) {
+bool Logging::ErrorWCerr(const string& Message) {
     if (ShowError) {
         string AboutToWrite;
         AboutToWrite = FormatMessage(Message, "ERROR");
@@ -233,7 +233,7 @@ bool Logging::ErrorWCerr(string Message) {
     return FileHandle.good();
 }
 
-bool Logging::Critical(string Message) {
+bool Logging::Critical(const string& Message) {
     if (ShowCritical) {
         LoggerMutex.lock();
         FileHandle << FormatMessage(Message, "CRITICAL") << std::endl;
@@ -243,7 +243,7 @@ bool Logging::Critical(string Message) {
     return FileHandle.good();
 }
 
-bool Logging::CriticalWCerr(string Message) {
+bool Logging::CriticalWCerr(const string& Message) {
     if (ShowCritical) {
         string AboutToWrite;
         AboutToWrite = FormatMessage(Message, "CRITICAL");
