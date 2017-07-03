@@ -21,6 +21,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 #include <iostream>
 
+#include "sockettools.h"
 #include "loggertools.h"
 
 using std::string;
@@ -30,6 +31,76 @@ using boost::asio::ip::tcp;
 
 //Allow us to use the logger here.
 extern Logging Logger;
+
+//Define ClientSocket's functions.
+//---------- Setup Functions ----------
+void ClientSocket::SetPortNumber(const int& PortNo) {
+    PortNumber = PortNo;
+
+}
+
+//Only useful when creating a socket, rather than an acceptor.
+void ClientSocket::SetServerAddress(const string& ServerAdd) {
+    ServerAddress = ServerAdd;
+
+}
+
+//---------- Connection Functions ----------
+void ClientSocket::CreateSocket() {
+    //Sets up the socket for us, and returns a shared pointer to it.
+    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Creating the socket...");
+
+    //DNS resolution.
+    tcp::resolver resolver(*io_service);
+    tcp::resolver::query query(ServerAddress, std::to_string(PortNumber));
+    endpoint_iterator = resolver.resolve(query);
+
+    Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
+
+    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Done!");
+
+}
+
+void ClientSocket::WaitForSocketToConnect() {
+    //Waits until the socket has connected to an acceptor socket.
+    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Attempting to connect to acceptor socket...");
+    boost::asio::connect(*Socket, endpoint_iterator);
+
+    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Done!");
+
+}
+
+//---------- Operators ----------
+std::shared_ptr<tcp::socket> ClientSocket::operator * () {
+    //Return the socket.
+    return Socket;
+
+}
+
+void ServerSocket::CreateAcceptorSocket() {
+    //Sets up the socket for us, and returns a shared pointer to it.
+    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Creating a socket...");
+
+    //tcp::acceptor acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber));
+
+    //acceptorptr* = &acceptor;
+
+    //Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
+
+    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Done!");
+
+}
+
+void ServerSocket::WaitForAcceptorSocketToConnect() {
+    //Waits until the acceptor socket is connected.
+    //Wait for a connection.
+    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Waiting for a connection...");
+
+    //acceptor->accept(*Socket);
+
+    Logger.Info("Socket Tools: ServerSocket::CreateAcceptorSocket(): Done.");
+
+}
 
 int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, queue<vector<char> >& In, queue<vector<char> >& Out) {
     //Sends any messages waiting in the message queue.
