@@ -39,6 +39,8 @@ Logging Logger;
 queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
 queue<vector<char> > InMessageQueue;
 
+bool ReadyForTransmission = false;
+
 void Usage() {
     //Prints cmdline options.
     std::cout << "Usage: stroodlrd [OPTION]" << std::endl << std::endl << std::endl;
@@ -56,6 +58,48 @@ void Usage() {
 
 }
 
+void MessageBus(int PortNumber) {
+    //Setup.
+    bool Sent = false;
+    std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+
+    //Setup socket.
+    ServerSocket Socket;
+
+    Socket.SetPortNumber(PortNumber);
+
+    //Handle any errors while connecting.
+    try {
+        Socket.CreateSocket();
+        Socket.WaitForSocketToConnect();
+
+        SocketPtr = *Socket;
+
+        //We are now connected.
+        ReadyForTransmission = true;
+
+    } catch (boost::system::system_error const& e) { //*** change readyfortransmission? ***
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Exiting..." << std::endl;
+
+        //TODO Handle better later. *** Don't crash if this happens, exit gracefully ***
+        throw std::runtime_error("Couldn't connect to server!");
+    }
+
+    while (!::RequestedExit) {
+        //Send any pending messages.
+        Sent = SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
+
+        //Receive messages if there are any.
+        AttemptToReadFromSocket(SocketPtr, InMessageQueue);
+
+    }
+
+    Logger.Debug("MessageBus(): Exiting...");
+
+    SocketPtr = nullptr;
+}
+
 int main(int argc, char* argv[]) {
     //Setup the logger. *** Handle exceptions ***
     Logger.SetName("Stroodlr Server "+Version);
@@ -70,6 +114,7 @@ int main(int argc, char* argv[]) {
     Logger.SetLevel("Info");
     int PortNumber = 50000;
     string Temp;
+    std::shared_ptr<std::thread> ClientThread;
 
     //Parse commandline options.
     try {
@@ -82,33 +127,13 @@ int main(int argc, char* argv[]) {
 
     }
 
-    std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+    Logger.Info("main(): Starting message bus thread...");
+    ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
 
-    //Setup socket.
-    ServerSocket Socket;
-
-    Socket.SetPortNumber(PortNumber);
-
-    //Handle any errors while setting up the socket.
-    try {
-        //Setup socket.
-        Socket.CreateSocket();
-        Socket.WaitForSocketToConnect();
-
-        SocketPtr = *Socket;
-
-    } catch (boost::system::system_error const& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "Exiting..." << std::endl;
-
-        //TODO Handle better later.
-        return 1;
-    }
+    //Wait until we're connected.
+    while (!ReadyForTransmission) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     while (ConnectedToClient(InMessageQueue) && !::RequestedExit) {
-        //Receive mesages if there are any.
-        AttemptToReadFromSocket(SocketPtr, InMessageQueue);
-
         //Check if there are any messages.
         Logger.Debug("main(): Checking for messages...");
 
@@ -123,33 +148,22 @@ int main(int argc, char* argv[]) {
                 Logger.Debug("main(): Received GOODBYE from local client...");
 
                 //Give the output thread time to write the message.
-                //Send any pending messages. *** Should we just discard them? ***
-                Logger.Debug("main(): Sending any pending messages...");
-                SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
-
                 Logger.Info("main(): Client disconnected. Making a new socket and waiting for a connection...");
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-                //Setup socket. *** Won't work right now, need to change how this works so old one goes out of scope/gets overwritten when we create the new one ***
-                ServerSocket Socket;
+                //Request the client thread to exit.
+                ::RequestedExit = true;
 
-                Socket.SetPortNumber(PortNumber);
+                //Wait until it exits.
+                ClientThread->join();
+                ReadyForTransmission = false;
 
-                //Handle any errors while setting up the socket.
-                try {
-                    //Setup socket.
-                    Socket.CreateSocket();
-                    Socket.WaitForSocketToConnect();
+                //Restart the thread.
+                Logger.Info("main(): Restarting message bus thread...");
+                ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
 
-                    SocketPtr = *Socket;
-
-                } catch (boost::system::system_error const& e) {
-                    std::cerr << "Error: " << e.what() << std::endl;
-                    std::cerr << "Exiting..." << std::endl;
-
-                    //TODO Handle better later.
-                    return 1;
-                }
+                //Wait until we're connected.
+                while (!ReadyForTransmission) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                 //We are now connected the the client. Start the handler thread to send messages back and forth.
                 Logger.Info("main(): We are now reconnected to the client...");
@@ -160,10 +174,6 @@ int main(int argc, char* argv[]) {
 
         }
 
-        //Send any pending messages.
-        Logger.Debug("main(): Sending any pending messages...");
-        SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
-
         //Wait for 1 second before doing anything.
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
@@ -173,7 +183,9 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Exiting..." << std::endl;
 
-    RequestedExit = true;
+    ::RequestedExit = true;
+
+    ClientThread->join();
 
     return 0;
 }

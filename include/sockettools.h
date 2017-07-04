@@ -70,6 +70,7 @@ public:
     ~ServerSocket() {
         Socket = nullptr;
         io_service = nullptr;
+        std::cout << "ServerSocket Destructor..." << std::endl;
 
     }
 

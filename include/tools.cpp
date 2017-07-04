@@ -30,7 +30,7 @@ bool RequestedExit = false;
 
 //Global. Must explicitly declare external linkage for constants if shared between files and header not included.
 extern const string Version = "0.9";
-extern const string ReleaseDate = "3/7/2017";
+extern const string ReleaseDate = "4/7/2017";
 
 string ConvertToString(const vector<char>& Vec) {
     //Converts a vector<char> to a string to make it easy to read and process.
