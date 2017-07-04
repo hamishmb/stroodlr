@@ -65,14 +65,14 @@ void MessageBus(int PortNumber) {
     std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
 
     //Setup socket.
-    ServerSocket Socket(io_service);
+    Sockets Socket(io_service);
 
     Socket.SetPortNumber(PortNumber);
 
     //Handle any errors while connecting.
     try {
         Socket.CreateSocket();
-        Socket.WaitForSocketToConnect();
+        Socket.ConnectSocket();
 
         SocketPtr = *Socket;
 

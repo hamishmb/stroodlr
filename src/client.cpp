@@ -65,20 +65,21 @@ void MessageBus(string ServerAddress) {
     //Setup.
     bool Sent = false;
     int PortNumber = 50000;
-    std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+    std::shared_ptr<boost::asio::ip::tcp::socket> PlugPtr;
+    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
 
     //Setup socket.
-    ClientSocket Socket;
+    Sockets Plug(io_service);
 
-    Socket.SetPortNumber(PortNumber);
-    Socket.SetServerAddress(ServerAddress);
+    Plug.SetPortNumber(PortNumber);
+    Plug.SetServerAddress(ServerAddress);
 
     //Handle any errors while connecting.
     try {
-        Socket.CreateSocket();
-        Socket.WaitForSocketToConnect();
+        Plug.CreatePlug();
+        Plug.ConnectPlug();
 
-        SocketPtr = *Socket;
+        PlugPtr = *Plug;
 
         //We are now connected.
         ReadyForTransmission = true;
@@ -93,14 +94,14 @@ void MessageBus(string ServerAddress) {
 
     while (!::RequestedExit) {
         //Send any pending messages.
-        Sent = SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
+        Sent = SendAnyPendingMessages(PlugPtr, InMessageQueue, OutMessageQueue);
 
         //Receive messages if there are any.
-        AttemptToReadFromSocket(SocketPtr, InMessageQueue);
+        AttemptToReadFromSocket(PlugPtr, InMessageQueue);
 
     }
 
-    SocketPtr = nullptr;
+    PlugPtr = nullptr;
 }
 
 int main(int argc, char* argv[])

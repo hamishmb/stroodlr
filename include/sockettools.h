@@ -23,77 +23,48 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 
 //Class definitions.
-class ClientSocket {
-public:
-    //Default constructor.
-    ClientSocket() {}
-
-    //Destructor.
-    ~ClientSocket() {
-        Socket = nullptr;
-        io_service = nullptr;     
-
-    }
-
-    //Other constructors.
-    ClientSocket(const ClientSocket& that) = delete; //Don't allow the copy constructor, because it's often dangerous to allow multiple references to a socket.
-    ClientSocket operator = (const ClientSocket& rhs) = delete; //Comparisons are pointless;
-    std::shared_ptr<boost::asio::ip::tcp::socket> operator * ();
-
-    //Setup functions.
-    void SetPortNumber(const int& PortNo);
-    void SetServerAddress(const std::string& ServerAdd);
-
-    //Connection functions.
-    void CreateSocket();
-    void WaitForSocketToConnect();
-
+class Sockets {
 private:
     //Variables.
     int PortNumber;
     std::string ServerAddress;
-    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
+    std::shared_ptr<boost::asio::io_service> io_service;
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     //Boost core variables.
     std::shared_ptr<boost::asio::ip::tcp::resolver> resolver;
     boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
-
-};
-
-class ServerSocket {
-private:
-    //Variables.
-    int PortNumber;
-    std::shared_ptr<boost::asio::io_service> io_service;
-    std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
-
-    //Boost core variables.
     std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
 
 public:
     //Constructors.
-    ServerSocket(std::shared_ptr<boost::asio::io_service> new_io_service) : io_service(new_io_service) {};
+    Sockets(std::shared_ptr<boost::asio::io_service> new_io_service) : io_service(new_io_service) {};
 
     //Destructor.
-    ~ServerSocket() {
+    ~Sockets() {
         Socket = nullptr;
-        io_service = nullptr;
+        io_service = nullptr; 
         acceptor = nullptr;
+        resolver = nullptr;    
 
     }
 
     //Other constructors.
-    ServerSocket(const ServerSocket& that) = delete; //Don't allow the copy constructor, because it's often dangerous to allow multiple references to a socket.
-    ServerSocket operator = (const ServerSocket& rhs) = delete; //Comparisons are pointless;
+    Sockets(const Sockets& that) = delete; //Don't allow the copy constructor, because it's often dangerous to allow multiple references to a socket.
+    Sockets operator = (const Sockets& rhs) = delete; //Comparisons are pointless;
     std::shared_ptr<boost::asio::ip::tcp::socket> operator * ();
 
     //Setup functions.
     void SetPortNumber(const int& PortNo);
+    void SetServerAddress(const std::string& ServerAdd); //Only needed when creating a plug.
 
-    //Connection functions.
+    //Connection functions (Plug).
+    void CreatePlug();
+    void ConnectPlug();
+
+    //Connection functions (Socket).
     void CreateSocket();
-    void WaitForSocketToConnect();
+    void ConnectSocket();
 
 };
 

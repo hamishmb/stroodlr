@@ -32,23 +32,23 @@ using boost::asio::ip::tcp;
 //Allow us to use the logger here.
 extern Logging Logger;
 
-//Define ClientSocket's functions.
+//Define Sockets' functions.
 //---------- Setup Functions ----------
-void ClientSocket::SetPortNumber(const int& PortNo) {
+void Sockets::SetPortNumber(const int& PortNo) {
     PortNumber = PortNo;
 
 }
 
-//Only useful when creating a socket, rather than an acceptor.
-void ClientSocket::SetServerAddress(const string& ServerAdd) {
+//Only useful when creating a plug, rather than a socket.
+void Sockets::SetServerAddress(const string& ServerAdd) {
     ServerAddress = ServerAdd;
 
 }
 
-//---------- Connection Functions ----------
-void ClientSocket::CreateSocket() {
-    //Sets up the socket for us, and returns a shared pointer to it.
-    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Creating the socket...");
+//---------- Connection Functions (Plugs) ----------
+void Sockets::CreatePlug() {
+    //Sets up the plug for us.
+    Logger.Info("Socket Tools: Sockets::CreatePlug(): Creating the plug...");
 
     //DNS resolution.
     tcp::resolver resolver(*io_service);
@@ -57,63 +57,42 @@ void ClientSocket::CreateSocket() {
 
     Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
 
-    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Done!");
+    Logger.Info("Socket Tools: Sockets::CreatePlug(): Done!");
 
 }
 
-void ClientSocket::WaitForSocketToConnect() {
-    //Waits until the socket has connected to an acceptor socket.
-    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Attempting to connect to acceptor socket...");
+void Sockets::ConnectPlug() { //*** ERROR HANDLING ***
+    //Waits until the plug has connected to a socket.
+    Logger.Info("Socket Tools: Sockets::ConnectPlug(): Attempting to connect to the requested socket...");
     boost::asio::connect(*Socket, endpoint_iterator);
 
-    Logger.Info("Socket Tools: ClientSocket::CreateSocket(): Done!");
+    Logger.Info("Socket Tools: Sockets::ConnectPlug(): Done!");
 
 }
 
-//---------- Operators ----------
-std::shared_ptr<tcp::socket> ClientSocket::operator * () {
-    //Return the socket.
-    return Socket;
-
-}
-
-//Define ServerSocket's functions.
-//---------- Setup Functions ----------
-void ServerSocket::SetPortNumber(const int& PortNo) {
-    PortNumber = PortNo;
-
-}
-
-//---------- Connection Functions ----------
-void ServerSocket::CreateSocket() {
-    //Sets up the socket for us, and returns a shared pointer to it.
-    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Creating the socket...");
-
-    Logger.Debug("1");
+//---------- Connection Functions (Sockets) ----------
+void Sockets::CreateSocket() {
+    //Sets up the socket for us.
+    Logger.Info("Socket Tools: Sockets::CreateSocket(): Creating the socket...");
 
     acceptor = std::shared_ptr<tcp::acceptor>(new tcp::acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber)));
-
-    Logger.Debug("2");
-
     Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
 
-    Logger.Debug("3");
-
-    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Done!");
+    Logger.Info("Socket Tools: Sockets::CreateSocket(): Done!");
 
 }
 
-void ServerSocket::WaitForSocketToConnect() {
-    //Waits until the socket has connected to an acceptor socket.
-    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Attempting to connect to acceptor socket...");
+void Sockets::ConnectSocket() {
+    //Waits until the socket has connected to a plug.
+    Logger.Info("Socket Tools: Sockets::ConnectSocket(): Attempting to connect to acceptor socket...");
     acceptor->accept(*Socket);
 
-    Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Done!");
+    Logger.Info("Socket Tools: Sockets::ConnectSocket(): Done!");
 
 }
 
 //---------- Operators ----------
-std::shared_ptr<tcp::socket> ServerSocket::operator * () {
+std::shared_ptr<tcp::socket> Sockets::operator * () {
     //Return the socket.
     return Socket;
 
