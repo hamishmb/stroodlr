@@ -89,8 +89,15 @@ void ServerSocket::CreateSocket() {
     //Sets up the socket for us, and returns a shared pointer to it.
     Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Creating the socket...");
 
+    Logger.Debug("1");
+
     acceptor = std::shared_ptr<tcp::acceptor>(new tcp::acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber)));
+
+    Logger.Debug("2");
+
     Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
+
+    Logger.Debug("3");
 
     Logger.Info("Socket Tools: ServerSocket::CreateSocket(): Done!");
 

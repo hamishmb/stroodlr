@@ -62,9 +62,10 @@ void MessageBus(int PortNumber) {
     //Setup.
     bool Sent = false;
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
+    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
 
     //Setup socket.
-    ServerSocket Socket;
+    ServerSocket Socket(io_service);
 
     Socket.SetPortNumber(PortNumber);
 
@@ -156,7 +157,10 @@ int main(int argc, char* argv[]) {
 
                 //Wait until it exits.
                 ClientThread->join();
+
+                //Reset.
                 ReadyForTransmission = false;
+                ::RequestedExit = false;
 
                 //Restart the thread.
                 Logger.Info("main(): Restarting message bus thread...");

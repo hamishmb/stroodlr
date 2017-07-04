@@ -62,15 +62,24 @@ private:
 };
 
 class ServerSocket {
+private:
+    //Variables.
+    int PortNumber;
+    std::shared_ptr<boost::asio::io_service> io_service;
+    std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
+
+    //Boost core variables.
+    std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
+
 public:
-    //Default constructor.
-    ServerSocket() {};
+    //Constructors.
+    ServerSocket(std::shared_ptr<boost::asio::io_service> new_io_service) : io_service(new_io_service) {};
 
     //Destructor.
     ~ServerSocket() {
         Socket = nullptr;
         io_service = nullptr;
-        std::cout << "ServerSocket Destructor..." << std::endl;
+        acceptor = nullptr;
 
     }
 
@@ -85,15 +94,6 @@ public:
     //Connection functions.
     void CreateSocket();
     void WaitForSocketToConnect();
-
-private:
-    //Variables.
-    int PortNumber;
-    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
-    std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
-
-    //Boost core variables.
-    std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
 
 };
 
