@@ -138,7 +138,7 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const
     Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Attempting to read some data from the socket...");
 
     //Setup.
-    std::vector<char>* MyBuffer = new std::vector<char> (128);;
+    std::vector<char>* MyBuffer = new std::vector<char> (128, '#');
     boost::system::error_code Error;
 
     try {
@@ -179,6 +179,9 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const
 
         else if (Error)
             throw boost::system::system_error(Error); // Some other error.
+
+        //Remove any remaining "#"s.
+        MyBuffer->erase(std::remove(MyBuffer->begin(), MyBuffer->end(), '#'), MyBuffer->end());
 
         //Push to the message queue.
         In.push(*MyBuffer);
