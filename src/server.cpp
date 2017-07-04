@@ -144,8 +144,8 @@ int main(int argc, char* argv[]) {
             Logger.Debug("main(): Sending ACKnowledgement...");
             OutMessageQueue.push(ConvertToVectorChar("ACK"));
 
-            //If the message was "CLIENTGOODBYE", close the socket and make a new one. *** Why can't I do string comparison here? ***
-            if (strcmp(ConvertToString(InMessageQueue.front()).c_str(), "CLIENTGOODBYE") == 0) {
+            //If the message was "CLIENTGOODBYE", close the socket and make a new one.
+            if (ConvertToString(InMessageQueue.front()) == "CLIENTGOODBYE") {
                 Logger.Debug("main(): Received GOODBYE from local client...");
 
                 //Give the output thread time to write the message.
