@@ -21,6 +21,8 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 
+#include "loggertools.h"
+
 using std::string;
 using std::vector;
 using std::queue;
@@ -31,6 +33,9 @@ bool RequestedExit = false;
 //Global. Must explicitly declare external linkage for constants if shared between files and header not included.
 extern const string Version = "0.9";
 extern const string ReleaseDate = "4/7/2017";
+
+//Allow us to use the logger here.
+extern Logging Logger;
 
 string ConvertToString(const vector<char>& Vec) {
     //Converts a vector<char> to a string to make it easy to read and process.
@@ -61,4 +66,12 @@ vector<string> split(const string& mystring, const string delimiters) {
     boost::split(splitstring, mystring, boost::is_any_of(delimiters));
 
     return splitstring;
+}
+
+void RequestExit(int Signal) {
+    //Attempts to get the program to exit nicely.
+    Logger.Error("Tools: RequestExit(): User requested exit with CTRL-C! Attempting to exit cleanly...");
+
+    RequestedExit = true;
+
 }

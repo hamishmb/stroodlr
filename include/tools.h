@@ -24,6 +24,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 std::string ConvertToString(const std::vector<char>& Vec);
 std::vector<char> ConvertToVectorChar(const std::string& Str);
 std::vector<std::string> split(const std::string& mystring, const std::string delimiters);
+void RequestExit(int Signal);
 
 //Global data.
 extern bool RequestedExit;

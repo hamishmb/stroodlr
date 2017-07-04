@@ -22,6 +22,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <vector>
 #include <boost/asio.hpp>
+#include <signal.h> //POSIX-only.
 
 //Custom includes.
 #include "../include/tools.h"
@@ -78,6 +79,9 @@ void MessageBus(int PortNumber) {
 
         //We are now connected.
         ReadyForTransmission = true;
+
+        //Setup signal handler.
+        signal(SIGINT, RequestExit);
 
     } catch (boost::system::system_error const& e) { //*** change readyfortransmission? ***
         std::cerr << "Error: " << e.what() << std::endl;

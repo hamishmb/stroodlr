@@ -24,6 +24,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <chrono>
 #include <thread>
 #include <cctype>
+#include <signal.h> //POSIX-only.
 
 //Custom headers.
 #include "../include/tools.h"
@@ -83,6 +84,9 @@ void MessageBus(string ServerAddress) {
 
         //We are now connected.
         ReadyForTransmission = true;
+
+        //Setup signal handler.
+        signal(SIGINT, RequestExit);
 
     } catch (boost::system::system_error const& e) { //*** change readyfortransmission? ***
         std::cerr << "Error: " << e.what() << std::endl;
