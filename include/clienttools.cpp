@@ -81,7 +81,7 @@ void ShowHelp() {
     std::cout << "        HISTORY:                  Shows command history (up to 100 commands)." << std::endl;
     std::cout << "        STATUS:                   Outputs client and server status information." << std::endl;
     std::cout << "        LISTSERV:                 Lists all connected servers." << std::endl;
-    std::cout << "        LSMSG:                    Lists all messages, and clears them." << std::endl;
+    std::cout << "        LSMSG or LISTMSG:         Lists all messages, and clears them." << std::endl;
     std::cout << "        SEND <message>:           Sends a message (currently only to local server)." << std::endl;
     std::cout << "        Q, QUIT, EXIT:            Exits the program." << std::endl << std::endl;
     std::cout << "Stroodlr "+Version+" is released under the GNU GPL Version 3" << std::endl;

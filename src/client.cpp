@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
             Logger.Info("main(): Listing connected servers...");
             ListConnectedServers();
 
-        } else if (splitcommand[0] == "LSMSG") {
+        } else if (splitcommand[0] == "LSMSG" || splitcommand[0] == "LISTMSG") {
             Logger.Info("main(): Listing messages...");
             ListMessages(InMessageQueue);
 
