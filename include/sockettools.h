@@ -28,25 +28,25 @@ private:
     //Variables.
     int PortNumber;
     std::string ServerAddress;
-    std::shared_ptr<boost::asio::io_service> io_service;
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
 
     //Boost core variables.
+    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
     std::shared_ptr<boost::asio::ip::tcp::resolver> resolver;
     boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
 
 public:
     //Constructors.
-    Sockets(std::shared_ptr<boost::asio::io_service> new_io_service) : io_service(new_io_service) {};
+    Sockets() {};
 
-    //Destructor.
+    //Destructor. The order of destruction is important here.
     ~Sockets() {
         Socket = nullptr;
-        io_service = nullptr; 
         acceptor = nullptr;
         resolver = nullptr;    
-
+        io_service->stop();
+        io_service = nullptr;
     }
 
     //Other constructors.

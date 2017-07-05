@@ -64,6 +64,7 @@ void Sockets::CreatePlug() {
 void Sockets::ConnectPlug() { //*** ERROR HANDLING ***
     //Waits until the plug has connected to a socket.
     Logger.Info("Socket Tools: Sockets::ConnectPlug(): Attempting to connect to the requested socket...");
+
     boost::asio::connect(*Socket, endpoint_iterator);
 
     Logger.Info("Socket Tools: Sockets::ConnectPlug(): Done!");
@@ -85,6 +86,7 @@ void Sockets::CreateSocket() {
 void Sockets::ConnectSocket() {
     //Waits until the socket has connected to a plug.
     Logger.Info("Socket Tools: Sockets::ConnectSocket(): Attempting to connect to acceptor socket...");
+
     acceptor->accept(*Socket);
 
     Logger.Info("Socket Tools: Sockets::ConnectSocket(): Done!");

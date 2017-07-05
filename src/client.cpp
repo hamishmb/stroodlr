@@ -67,10 +67,9 @@ void MessageBus(string ServerAddress) {
     bool Sent = false;
     int PortNumber = 50000;
     std::shared_ptr<boost::asio::ip::tcp::socket> PlugPtr;
-    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
 
     //Setup socket.
-    Sockets Plug(io_service);
+    Sockets Plug;
 
     Plug.SetPortNumber(PortNumber);
     Plug.SetServerAddress(ServerAddress);

@@ -63,10 +63,11 @@ void MessageBus(int PortNumber) {
     //Setup.
     bool Sent = false;
     std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
-    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
 
     //Setup socket.
-    Sockets Socket(io_service);
+    Sockets Socket;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     Socket.SetPortNumber(PortNumber);
 
