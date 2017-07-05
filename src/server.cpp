@@ -94,10 +94,10 @@ void MessageBus(int PortNumber) {
 
     while (!::RequestedExit) {
         //Send any pending messages.
-        Sent = SendAnyPendingMessages(SocketPtr, InMessageQueue, OutMessageQueue);
+        Sent = Socket.SendAnyPendingMessages(InMessageQueue, OutMessageQueue);
 
         //Receive messages if there are any.
-        AttemptToReadFromSocket(SocketPtr, InMessageQueue);
+        Socket.AttemptToReadFromSocket(InMessageQueue);
 
     }
 

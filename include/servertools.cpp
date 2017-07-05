@@ -75,12 +75,19 @@ void ParseCmdlineOptions(int& PortNumber, const int& argc, char* argv[]) {
 
             //If not specified, exit.
             if (Temp.substr(0, 1) == "-") {
+                //'-' marks the beginning of the next option, if any.
                 throw std::runtime_error("Option value not specified.");
 
             }
 
-            //If we get here, we must be okay. *** Handle errors better here ***
-            PortNumber = std::stoi(Temp);
+            //If we get here, we should be fine, but catch invalid argument errors and rethrow them as runtime errors.
+            try {
+                PortNumber = std::stoi(Temp);
+
+            } catch (std::invalid_argument const& e) {
+                throw std::runtime_error("Option value invalid.");
+
+            }
 
         } else if ((Temp == "-q") || (Temp == "--quiet")) {
             //-q, --quiet.

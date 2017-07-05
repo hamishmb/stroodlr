@@ -66,8 +66,8 @@ public:
     void CreateSocket();
     void ConnectSocket();
 
-};
+    //Other function declarations.
+    int SendAnyPendingMessages(std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
+    void AttemptToReadFromSocket(std::queue<std::vector<char> >& In);
 
-//Function declarations.
-int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, std::queue<std::vector<char> >& In);
+};

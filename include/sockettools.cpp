@@ -91,16 +91,10 @@ void Sockets::ConnectSocket() {
 
 }
 
-//---------- Operators ----------
-std::shared_ptr<tcp::socket> Sockets::operator * () {
-    //Return the socket.
-    return Socket;
-
-}
-
-int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, queue<vector<char> >& In, queue<vector<char> >& Out) {
+//---------- Other Functions ----------
+int Sockets::SendAnyPendingMessages(queue<vector<char> >& In, queue<vector<char> >& Out) {
     //Sends any messages waiting in the message queue.
-    Logger.Debug("Socket Tools: SendAnyPendingMessages(): Sending any pending messages...");
+    Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Sending any pending messages...");
 
     //Setup. 
     boost::system::error_code Error;
@@ -108,7 +102,7 @@ int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const S
     try {
         //Wait until there's something to send in the queue.
         if (Out.empty()) {
-            Logger.Debug("Socket Tools: SendAnyPendingMessages(): Nothing to send.");
+            Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Nothing to send.");
             return false;
         }
 
@@ -129,13 +123,13 @@ int SendAnyPendingMessages(std::shared_ptr<boost::asio::ip::tcp::socket> const S
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
     }
 
-    Logger.Debug("Socket Tools: SendAnyPendingMessages(): Done.");
+    Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Done.");
     return true;
 }
 
-void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const Socket, queue<vector<char> >& In) {
+void Sockets::AttemptToReadFromSocket(queue<vector<char> >& In) {
     //Attempts to read some data from the socket.
-    Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Attempting to read some data from the socket...");
+    Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Attempting to read some data from the socket...");
 
     //Setup.
     std::vector<char>* MyBuffer = new std::vector<char> (128, '#');
@@ -159,18 +153,18 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const
         FD_SET(nativeSocket, &fileDescriptorSet);
 
         //Don't use mutexes here (blocks writing).
-        Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Waiting for data...");
+        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Waiting for data...");
 
         select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
 
         if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
             //We timed-out. Return.
-            Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Timed out. Giving up for now...");
+            Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Timed out. Giving up for now...");
             return;
         }
 
         //There must be some data, so read it.
-        Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Found data, reading it...");
+        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Found data, reading it...");
 
         Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
 
@@ -186,10 +180,17 @@ void AttemptToReadFromSocket(std::shared_ptr<boost::asio::ip::tcp::socket> const
         //Push to the message queue.
         In.push(*MyBuffer);
 
-        Logger.Debug("Socket Tools: AttemptToReadFromSocket(): Done.");
+        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Done.");
 
     } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
     }
+}
+
+//---------- Operators ----------
+std::shared_ptr<tcp::socket> Sockets::operator * () {
+    //Return the socket.
+    return Socket;
+
 }

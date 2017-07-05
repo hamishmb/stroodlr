@@ -99,10 +99,10 @@ void MessageBus(string ServerAddress) {
 
     while (!::RequestedExit) {
         //Send any pending messages.
-        Sent = SendAnyPendingMessages(PlugPtr, InMessageQueue, OutMessageQueue);
+        Sent = Plug.SendAnyPendingMessages(InMessageQueue, OutMessageQueue);
 
         //Receive messages if there are any.
-        AttemptToReadFromSocket(PlugPtr, InMessageQueue);
+        Plug.AttemptToReadFromSocket(InMessageQueue);
 
     }
 
