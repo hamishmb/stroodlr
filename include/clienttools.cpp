@@ -26,6 +26,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tools.h"
 #include "loggertools.h"
+#include "sockettools.h"
 
 using std::queue;
 using std::deque;
@@ -89,51 +90,51 @@ void ShowHelp() {
 
 }
 
-void CheckForMessages(const queue<vector<char> > *In) {
+void CheckForMessages(Sockets* const Ptr) {
     //Check if there are any messages, and notifies user if so.
     Logger.Debug("Client Tools: CheckForMessages(): Checking for messages...");
 
-    if (!In->empty()) {
+    if (Ptr->HasPendingData()) {
         //Notify user.
         Logger.Debug("Client Tools: CheckForMessages(): There are new messages. Notifying user...");
         std::cout << std::endl << "You have new messages." << std::endl << std::endl;
     }
 }
 
-void ListMessages(queue<vector<char> >& In) {
+void ListMessages(Sockets* const Ptr) {
     Logger.Debug("Client Tools: ListMessages(): Listing any messages...");
 
-    if (In.empty()) {
+    if (!(Ptr->HasPendingData())) {
         Logger.Debug("Client Tools: ListMessages(): No messages.");
         std::cout << "No messages." << std::endl;
         return;
     }
 
     //List all messages.
-    while (!In.empty()) {
+    while (Ptr->HasPendingData()) {
         //Convert each message to a string and then print it.
-        std::cout << std::endl << ConvertToString(In.front()) << std::endl;
-        In.pop();
+        std::cout << std::endl << ConvertToString(Ptr->Read()) << std::endl;
+        Ptr->Pop();
     }
 
     Logger.Debug("Client Tools: ListMessages(): Done.");
     std::cout << "End of messages." << std::endl << std::endl;
 }
 
-void SendToServer(const vector<char>& Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
+void SendToServer(const vector<char>& Msg, Sockets* const Ptr) {
     //Sends the given message to the local server and waits for an acknowledgement). *** TODO If ACK is very slow, try again *** *** Will need to change this later cos if there's a high volume of messages it might fail ***
     Logger.Info("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
 
     //Push it to the message queue.
-    Out.push(Msg);
+    Ptr->Write(Msg);
 
     //Wait until an \x06 (ACK) has arrived.
     Logger.Debug("Client Tools: SendToServer(): Waiting for ACK...");
-    while (In.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    while (!(Ptr->HasPendingData())) std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
     //Remove the ACK from the queue.
     Logger.Info("Client Tools: SendToServer(): Done.");
-    In.pop();
+    Ptr->Pop();
 }
 
 bool ConnectedToServer(const queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***

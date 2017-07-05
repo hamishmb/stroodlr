@@ -20,13 +20,15 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <string>
 
+#include "sockettools.h"
+
 //Function prototypes.
 void ListConnectedServers();
 void ShowHistory(const std::deque<std::string> &History);
 void ShowStatus();
 void ShowHelp();
-void CheckForMessages(const std::queue<std::vector<char> > *In);
-void ListMessages(std::queue<std::vector<char> >& In);
-void SendToServer(const std::vector<char>& Msg, std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
+void CheckForMessages(Sockets* const Ptr);
+void ListMessages(Sockets* const Ptr);
+void SendToServer(const std::vector<char>& Msg, Sockets* const Ptr);
 bool ConnectedToServer(const std::queue<std::vector<char> >& InMessageQueue);
 std::string ParseCmdlineOptions(std::string& ServerAddress, const int& argc, char* argv[]);

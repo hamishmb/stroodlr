@@ -62,24 +62,15 @@ void Usage() {
 void MessageBus(int PortNumber) {
     //Setup.
     bool Sent = false;
-    std::shared_ptr<boost::asio::ip::tcp::socket> SocketPtr;
 
-    //Setup socket.
-    Sockets Socket;
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    //Setup Socket->
+    Sockets Socket("Socket");
 
     Socket.SetPortNumber(PortNumber);
 
     //Handle any errors while connecting.
     try {
-        Socket.CreateSocket();
-        Socket.ConnectSocket();
-
-        SocketPtr = *Socket;
-
-        //We are now connected.
-        ReadyForTransmission = true;
+        Socket.StartHandler();
 
         //Setup signal handler.
         signal(SIGINT, RequestExit);
@@ -93,21 +84,11 @@ void MessageBus(int PortNumber) {
         ::RequestedExit = true;
     }
 
-    while (!::RequestedExit) {
-        //Send any pending messages.
-        Sent = Socket.SendAnyPendingMessages(InMessageQueue, OutMessageQueue);
-
-        //Receive messages if there are any.
-        Socket.AttemptToReadFromSocket(InMessageQueue);
-
-    }
-
     //Deregister signal handler, so we can exit if we get stuck while connectiing again.
     signal(SIGINT, SIG_DFL);
 
     Logger.Debug("MessageBus(): Exiting...");
 
-    SocketPtr = nullptr;
 }
 
 int main(int argc, char* argv[]) {
@@ -125,6 +106,7 @@ int main(int argc, char* argv[]) {
     int PortNumber = 50000;
     string Temp;
     std::shared_ptr<std::thread> ClientThread;
+    bool Pop = true;
 
     //Parse commandline options.
     try {
@@ -137,13 +119,21 @@ int main(int argc, char* argv[]) {
 
     }
 
-    Logger.Info("main(): Starting message bus thread...");
-    ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
+    //Logger.Info("main(): Starting message bus thread...");
+    //ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
+
+    //Setup Socket-> *** Won't need to use sharped_ptr after reset method has been made ***
+    std::shared_ptr<Sockets> Socket;
+    Socket = std::shared_ptr<Sockets>(new Sockets("Socket"));
+
+    Socket->SetPortNumber(PortNumber);
+
+    Socket->StartHandler();
 
     //Wait until we're connected or requested to exit because of a connection error..
-    while (!ReadyForTransmission && !::RequestedExit) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (!Socket->IsReady() && !Socket->HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    if (RequestedExit) {
+    if (Socket->HandlerHasExited()) {
         //Couldn't connect to client.
         Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
 
@@ -155,14 +145,14 @@ int main(int argc, char* argv[]) {
         //Check if there are any messages.
         Logger.Debug("main(): Checking for messages...");
 
-        while (!InMessageQueue.empty()) {
-            Logger.Debug("main(): Message from local client: "+ConvertToString(InMessageQueue.front())+"...");
+        while (Socket->HasPendingData()) {
+            Logger.Debug("main(): Message from local client: "+ConvertToString(Socket->Read())+"...");
 
             Logger.Debug("main(): Sending acknowledgement...");
-            OutMessageQueue.push(ConvertToVectorChar("\x06"));
+            Socket->Write(ConvertToVectorChar("\x06"));
 
-            //If the message was "CLIENTGOODBYE", close the socket and make a new one.
-            if (ConvertToString(InMessageQueue.front()) == "CLIENTGOODBYE") {
+            //If the message was "CLIENTGOODBYE", close the socket and make a new one. *** Make a reset method for Sockets that does this ***
+            if (ConvertToString(Socket->Read()) == "CLIENTGOODBYE") {
                 Logger.Debug("main(): Received GOODBYE from local client...");
 
                 //Give the output thread time to write the message.
@@ -170,29 +160,45 @@ int main(int argc, char* argv[]) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
                 //Request the client thread to exit.
-                ::RequestedExit = true;
+                Socket->RequestHandlerExit();
 
                 //Wait until it exits.
-                ClientThread->join();
-
-                //Reset.
-                ReadyForTransmission = false;
-                ::RequestedExit = false;
+                Socket->WaitForHandlerToExit();
 
                 //Restart the thread.
                 Logger.Info("main(): Restarting message bus thread...");
-                ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
+                Socket = std::shared_ptr<Sockets>(new Sockets("Socket"));
 
-                //Wait until we're connected.
-                while (!ReadyForTransmission) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                Socket->SetPortNumber(PortNumber);
+
+                Socket->StartHandler();
+
+                //Wait until we're connected or requested to exit because of a connection error..
+                while (!Socket->IsReady() && !Socket->HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                if (Socket->HandlerHasExited()) {
+                    //Couldn't connect to client.
+                    Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
+
+                    exit(1);
+
+                }
 
                 //We are now connected the the client. Start the handler thread to send messages back and forth.
                 Logger.Info("main(): We are now reconnected to the client...");
 
+                //Hacky bit.
+                Pop = false;
+
             }
 
-            InMessageQueue.pop();
+            if (Pop) {
+                Socket->Pop();
 
+            } else {
+                Pop = true;
+
+            }
         }
 
         //Wait for 1 second before doing anything.
@@ -206,7 +212,8 @@ int main(int argc, char* argv[]) {
 
     ::RequestedExit = true;
 
-    ClientThread->join();
+    Socket->RequestHandlerExit();
+    Socket->WaitForHandlerToExit();
 
     return 0;
 }

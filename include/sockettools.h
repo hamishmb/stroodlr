@@ -21,24 +21,36 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <queue>
 #include <vector>
 #include <boost/asio.hpp>
+#include <thread>
 
 //Class definitions.
 class Sockets {
 private:
-    //Variables.
+    //Core variables and socket pointer.
     int PortNumber;
     std::string ServerAddress;
     std::shared_ptr<boost::asio::ip::tcp::socket> Socket;
+    std::thread HandlerThread;
+    std::string Type;
+
+    //Variables for tracking status of the other thread.
+    bool ReadyForTransmission = false;
+    bool HandlerShouldExit = false;
+    bool HandlerExited = false;
+
+    //Message queues.
+    std::queue<std::vector<char> > IncomingQueue;
+    std::queue<std::vector<char> > OutgoingQueue;
 
     //Boost core variables.
-    std::shared_ptr<boost::asio::io_service> io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
+    std::shared_ptr<boost::asio::io_service> io_service;
     std::shared_ptr<boost::asio::ip::tcp::resolver> resolver;
     boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
 
 public:
     //Constructors.
-    Sockets() {};
+    Sockets(std::string TheType) : Type(TheType) {};
 
     //Destructor. The order of destruction is important here.
     ~Sockets() {
@@ -57,6 +69,18 @@ public:
     //Setup functions.
     void SetPortNumber(const int& PortNo);
     void SetServerAddress(const std::string& ServerAdd); //Only needed when creating a plug.
+    void StartHandler();
+
+    //Info getter functions.
+    bool IsReady();
+    void WaitForHandlerToExit();
+    bool HandlerHasExited();
+
+    //Info setter functions.
+    void RequestHandlerExit();
+
+    //Handler.
+    static void Handler(Sockets* Ptr);
 
     //Connection functions (Plug).
     void CreatePlug();
@@ -66,8 +90,14 @@ public:
     void CreateSocket();
     void ConnectSocket();
 
+    //R/W functions.
+    void Write(std::vector<char> Msg);
+    bool HasPendingData();
+    std::vector<char> Read();
+    void Pop();
+
     //Other function declarations.
-    int SendAnyPendingMessages(std::queue<std::vector<char> >& In, std::queue<std::vector<char> >& Out);
-    void AttemptToReadFromSocket(std::queue<std::vector<char> >& In);
+    int SendAnyPendingMessages();
+    void AttemptToReadFromSocket();
 
 };

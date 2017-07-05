@@ -20,6 +20,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <boost/asio.hpp>
 #include <iostream>
+#include <thread>
 
 #include "sockettools.h"
 #include "loggertools.h"
@@ -45,10 +46,102 @@ void Sockets::SetServerAddress(const string& ServerAdd) {
 
 }
 
+void Sockets::StartHandler() {
+    //Starts the handler thread and then returns.
+    //Setup.
+    ReadyForTransmission = false;
+    HandlerShouldExit = false;
+    HandlerExited = false;
+
+    if (Type == "Plug" || Type == "Socket") { Type = Type;
+        HandlerThread = std::thread(Handler, this);
+
+    } else {
+        throw std::runtime_error("Type not set correctly");
+
+    }
+
+}
+
+//---------- Info getter functions ----------
+bool Sockets::IsReady() {
+    return ReadyForTransmission;
+
+}
+
+void Sockets::WaitForHandlerToExit() {
+    HandlerThread.join();
+
+}
+
+bool Sockets::HandlerHasExited() {
+    return HandlerExited;
+
+}
+
+//---------- Info Setter Functions ----------
+void Sockets::RequestHandlerExit() {
+    HandlerShouldExit = true;
+
+}
+
+//---------- Handler Thread ----------
+void Sockets::Handler(Sockets* Ptr) {
+    //Handles connecting, receiving incoming data, and sending outgoing data.
+    int Sent;
+
+    //Handle any errors while connecting.
+    try {
+        if (Ptr->Type == "Plug") {
+            Ptr->CreatePlug();
+            Ptr->ConnectPlug();
+
+        } else if (Ptr->Type == "Socket") {
+            Ptr->CreateSocket();
+            Ptr->ConnectSocket();
+
+        }
+
+        //We are now connected.
+        Ptr->ReadyForTransmission = true;
+
+        //Setup signal handler.
+        //signal(SIGINT, RequestExit);
+
+    } catch (boost::system::system_error const& e) {
+        Logger.Critical("Socket Tools: Sockets::Handler(): Error connecting: "+static_cast<string>(e.what())+". Exiting...");
+        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Sockets::Handler(): Exiting..." << std::endl;
+
+        Ptr->HandlerExited = true;
+
+        return;
+
+    }
+
+    while (!Ptr->HandlerShouldExit) {
+        //Send any pending messages.
+        Sent = Ptr->SendAnyPendingMessages();
+
+        //Receive messages if there are any.
+        Ptr->AttemptToReadFromSocket();
+
+    }
+
+    //Flag that we've exited.
+    Ptr->HandlerExited = true;
+
+    //Deregister signal handler, so we can exit if we get stuck while connectiing again.
+    //signal(SIGINT, SIG_DFL);
+
+}
+
 //---------- Connection Functions (Plugs) ----------
 void Sockets::CreatePlug() {
     //Sets up the plug for us.
     Logger.Info("Socket Tools: Sockets::CreatePlug(): Creating the plug...");
+
+    io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
 
     //DNS resolution.
     tcp::resolver resolver(*io_service);
@@ -76,6 +169,8 @@ void Sockets::CreateSocket() {
     //Sets up the socket for us.
     Logger.Info("Socket Tools: Sockets::CreateSocket(): Creating the socket...");
 
+    io_service = std::shared_ptr<boost::asio::io_service>(new boost::asio::io_service());
+
     acceptor = std::shared_ptr<tcp::acceptor>(new tcp::acceptor(*io_service, tcp::endpoint(tcp::v4(), PortNumber)));
     Socket = std::shared_ptr<tcp::socket>(new tcp::socket(*io_service));
 
@@ -85,7 +180,7 @@ void Sockets::CreateSocket() {
 
 void Sockets::ConnectSocket() {
     //Waits until the socket has connected to a plug.
-    Logger.Info("Socket Tools: Sockets::ConnectSocket(): Attempting to connect to acceptor socket...");
+    Logger.Info("Socket Tools: Sockets::ConnectSocket(): Attempting to connect to the requested socket...");
 
     acceptor->accept(*Socket);
 
@@ -93,8 +188,32 @@ void Sockets::ConnectSocket() {
 
 }
 
+//--------- Read/Write Functions ----------
+void Sockets::Write(vector<char> Msg) {
+    //Pushes a message to the outgoing message queue so it can be written later.
+    OutgoingQueue.push(Msg);
+
+}
+
+bool Sockets::HasPendingData() {
+    //Returns true/false if there is/isn't any data to read, respectively.
+    return !IncomingQueue.empty();
+
+}
+
+vector<char> Sockets::Read() {
+    vector<char> Temp = IncomingQueue.front();
+
+    return Temp;
+
+}
+
+void Sockets::Pop() {
+    IncomingQueue.pop();
+}
+
 //---------- Other Functions ----------
-int Sockets::SendAnyPendingMessages(queue<vector<char> >& In, queue<vector<char> >& Out) {
+int Sockets::SendAnyPendingMessages() {
     //Sends any messages waiting in the message queue.
     Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Sending any pending messages...");
 
@@ -103,13 +222,13 @@ int Sockets::SendAnyPendingMessages(queue<vector<char> >& In, queue<vector<char>
 
     try {
         //Wait until there's something to send in the queue.
-        if (Out.empty()) {
+        if (OutgoingQueue.empty()) {
             Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Nothing to send.");
             return false;
         }
 
         //Write the data.
-        boost::asio::write(*Socket, boost::asio::buffer(Out.front()), Error);
+        boost::asio::write(*Socket, boost::asio::buffer(OutgoingQueue.front()), Error);
 
         if (Error == boost::asio::error::eof)
             return false; // Connection closed cleanly by peer. *** HANDLE BETTER ***
@@ -118,7 +237,7 @@ int Sockets::SendAnyPendingMessages(queue<vector<char> >& In, queue<vector<char>
             throw boost::system::system_error(Error); // Some other error.
 
         //Remove last thing from message queue.
-        Out.pop();  
+        OutgoingQueue.pop();  
 
     } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
@@ -129,7 +248,7 @@ int Sockets::SendAnyPendingMessages(queue<vector<char> >& In, queue<vector<char>
     return true;
 }
 
-void Sockets::AttemptToReadFromSocket(queue<vector<char> >& In) {
+void Sockets::AttemptToReadFromSocket() {
     //Attempts to read some data from the socket.
     Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Attempting to read some data from the socket...");
 
@@ -180,7 +299,7 @@ void Sockets::AttemptToReadFromSocket(queue<vector<char> >& In) {
         MyBuffer->erase(std::remove(MyBuffer->begin(), MyBuffer->end(), '#'), MyBuffer->end());
 
         //Push to the message queue.
-        In.push(*MyBuffer);
+        IncomingQueue.push(*MyBuffer);
 
         Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Done.");
 

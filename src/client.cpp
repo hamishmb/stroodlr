@@ -30,7 +30,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include "../include/tools.h"
 #include "../include/loggertools.h"
 #include "../include/clienttools.h"
-#include "../include/sockettools.h"
+//#include "../include/sockettools.h"
 
 using std::string;
 using std::vector;
@@ -64,25 +64,19 @@ void Usage() {
 
 void MessageBus(string ServerAddress) {
     //Setup.
-    bool Sent = false;
     int PortNumber = 50000;
-    std::shared_ptr<boost::asio::ip::tcp::socket> PlugPtr;
 
     //Setup socket.
-    Sockets Plug;
+    Sockets Plug("Plug");
 
     Plug.SetPortNumber(PortNumber);
     Plug.SetServerAddress(ServerAddress);
 
+    Plug.StartHandler();
+
     //Handle any errors while connecting.
     try {
-        Plug.CreatePlug();
-        Plug.ConnectPlug();
-
-        PlugPtr = *Plug;
-
-        //We are now connected.
-        ReadyForTransmission = true;
+        Plug.StartHandler();
 
         //Setup signal handler.
         signal(SIGINT, RequestExit);
@@ -96,19 +90,9 @@ void MessageBus(string ServerAddress) {
         ::RequestedExit = true;
     }
 
-    while (!::RequestedExit) {
-        //Send any pending messages.
-        Sent = Plug.SendAnyPendingMessages(InMessageQueue, OutMessageQueue);
-
-        //Receive messages if there are any.
-        Plug.AttemptToReadFromSocket(InMessageQueue);
-
-    }
-
     //Deregister signal handler, so we can exit if we get stuck while connectiing again.
     signal(SIGINT, SIG_DFL);
 
-    PlugPtr = nullptr;
 }
 
 int main(int argc, char* argv[])
@@ -137,8 +121,19 @@ int main(int argc, char* argv[])
 
     }
 
-    Logger.Info("main(): Starting message bus thread...");
-    std::thread t1(MessageBus, ServerAddress);
+    //Logger.Info("main(): Starting message bus thread...");
+    //std::thread t1(MessageBus, ServerAddress);
+
+    //Setup.
+    int PortNumber = 50000;
+
+    //Setup socket.
+    Sockets Plug("Plug");
+
+    Plug.SetPortNumber(PortNumber);
+    Plug.SetServerAddress(ServerAddress);
+
+    Plug.StartHandler();
 
     string command;
     vector<string> splitcommand;
@@ -150,10 +145,10 @@ int main(int argc, char* argv[])
     std::cout << std::endl << "Connecting to server..." << std::endl;
 
     //Wait until we're connected, or requested to exit.
-    while (!ReadyForTransmission && !::RequestedExit) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (!Plug.IsReady() && !Plug.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     //If we're connected, display the greeting.
-    if (ReadyForTransmission) {
+    if (Plug.IsReady()) {
         Logger.Info("main(): Connected...");
         std::cout << "Connected!" << std::endl;
 
@@ -174,7 +169,7 @@ int main(int argc, char* argv[])
     //Main input loop.
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
         Logger.Debug("main(): Checking for new messages...");
-        CheckForMessages(&InMessageQueue);
+        CheckForMessages(&Plug);
 
         //Input prompt.
         std::cout << ">>>";
@@ -229,7 +224,7 @@ int main(int argc, char* argv[])
 
         } else if (splitcommand[0] == "LSMSG" || splitcommand[0] == "LISTMSG") {
             Logger.Info("main(): Listing messages...");
-            ListMessages(InMessageQueue);
+            ListMessages(&Plug);
 
         } else if (splitcommand[0] == "HELP") {
             Logger.Info("main(): Showing help...");
@@ -268,7 +263,7 @@ int main(int argc, char* argv[])
 
             //Send it.
             Logger.Info("main(): Sending the message...");
-            SendToServer(ConvertToVectorChar(abouttosend), InMessageQueue, OutMessageQueue);
+            SendToServer(ConvertToVectorChar(abouttosend), &Plug);
             Logger.Info("main(): Done.");
 
         } else {
@@ -285,7 +280,7 @@ int main(int argc, char* argv[])
 
     //Say goodbye to server.
     Logger.Info("main(): Saying goodbye to server...");
-    SendToServer(ConvertToVectorChar("CLIENTGOODBYE"), InMessageQueue, OutMessageQueue);
+    SendToServer(ConvertToVectorChar("CLIENTGOODBYE"), &Plug);
 
     //Exit if we broke out of the loop.
     Logger.Info("main(): Done. Saying goodbye to user and requesting that all threads exit...");
@@ -293,7 +288,8 @@ int main(int argc, char* argv[])
     std::cout << std::endl << "Bye!" << std::endl;
     ::RequestedExit = true;
 
-    t1.join();
+    Plug.RequestHandlerExit();
+    Plug.WaitForHandlerToExit();
 
     Logger.Info("main(): All threads have exited. Exiting...");
     std::cout << "Exiting..." << std::endl;
