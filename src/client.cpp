@@ -24,7 +24,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <chrono>
 #include <thread>
 #include <cctype>
-#include <signal.h> //POSIX-only. *** Using it causes issues in this one, because of the thread. ***
+#include <signal.h> //POSIX-only. *** Try to find an alternative solution - might not be thread-safe *** 
 
 //Custom headers.
 #include "../include/tools.h"
@@ -88,12 +88,13 @@ void MessageBus(string ServerAddress) {
         //Setup signal handler.
         signal(SIGINT, RequestExit);
 
-    } catch (boost::system::system_error const& e) { //*** change readyfortransmission? ***
+    } catch (boost::system::system_error const& e) {
+        Logger.Critical("MessageBus(): Error connecting to server: "+static_cast<string>(e.what())+". MessageBus Exiting...");
         std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "Exiting..." << std::endl;
+        std::cerr << "MessageBus Exiting..." << std::endl;
 
-        //TODO Handle better later. *** Don't crash if this happens, exit gracefully ***
-        throw std::runtime_error("Couldn't connect to server!");
+        //Requesting exit from Main Thread.
+        ::RequestedExit = true;
     }
 
     while (!::RequestedExit) {
@@ -104,6 +105,9 @@ void MessageBus(string ServerAddress) {
         AttemptToReadFromSocket(PlugPtr, InMessageQueue);
 
     }
+
+    //Deregister signal handler, so we can exit if we get stuck while connectiing again.
+    signal(SIGINT, SIG_DFL);
 
     PlugPtr = nullptr;
 }
@@ -146,18 +150,29 @@ int main(int argc, char* argv[])
     Logger.Info("main(): Waiting for connection to server...");
     std::cout << std::endl << "Connecting to server..." << std::endl;
 
-    //Wait until we're connected.
-    while (!ReadyForTransmission) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //Wait until we're connected, or requested to exit.
+    while (!ReadyForTransmission && !::RequestedExit) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    Logger.Info("main(): Connected...");
-    std::cout << "Connected!" << std::endl;
+    //If we're connected, display the greeting.
+    if (ReadyForTransmission) {
+        Logger.Info("main(): Connected...");
+        std::cout << "Connected!" << std::endl;
 
-    //Greet user and start waiting for commands.
-    //Display greeting.
-    std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
-    std::cout << "For help, type \"HELP\"" << std::endl;
-    std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
+        //Greet user and start waiting for commands.
+        //Display greeting.
+        std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
+        std::cout << "For help, type \"HELP\"" << std::endl;
+        std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
+    } else {
+        //Couldn't connect to server.
+        Logger.CriticalWCerr("Couldn't connect to server! Exiting...");
+
+        exit(1);
+
+    }
+
+    //Main input loop.
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
         Logger.Debug("main(): Checking for new messages...");
         CheckForMessages(&InMessageQueue);

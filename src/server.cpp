@@ -22,7 +22,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <thread>
 #include <vector>
 #include <boost/asio.hpp>
-#include <signal.h> //POSIX-only.
+#include <signal.h> //POSIX-only. *** Try to find an alternative solution - might not be thread-safe ***
 
 //Custom includes.
 #include "../include/tools.h"
@@ -83,12 +83,13 @@ void MessageBus(int PortNumber) {
         //Setup signal handler.
         signal(SIGINT, RequestExit);
 
-    } catch (boost::system::system_error const& e) { //*** change readyfortransmission? ***
+    } catch (boost::system::system_error const& e) {
+        Logger.Critical("MessageBus(): Error connecting to client: "+static_cast<string>(e.what())+". MessageBus Exiting...");
         std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "Exiting..." << std::endl;
+        std::cerr << "MessageBus Exiting..." << std::endl;
 
-        //TODO Handle better later. *** Don't crash if this happens, exit gracefully ***
-        throw std::runtime_error("Couldn't connect to server!");
+        //Requesting exit from Main Thread.
+        ::RequestedExit = true;
     }
 
     while (!::RequestedExit) {
@@ -99,6 +100,9 @@ void MessageBus(int PortNumber) {
         AttemptToReadFromSocket(SocketPtr, InMessageQueue);
 
     }
+
+    //Deregister signal handler, so we can exit if we get stuck while connectiing again.
+    signal(SIGINT, SIG_DFL);
 
     Logger.Debug("MessageBus(): Exiting...");
 
@@ -135,8 +139,16 @@ int main(int argc, char* argv[]) {
     Logger.Info("main(): Starting message bus thread...");
     ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
 
-    //Wait until we're connected.
-    while (!ReadyForTransmission) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //Wait until we're connected or requested to exit because of a connection error..
+    while (!ReadyForTransmission && !::RequestedExit) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    if (RequestedExit) {
+        //Couldn't connect to client.
+        Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
+
+        exit(1);
+
+    }
 
     while (ConnectedToClient(InMessageQueue) && !::RequestedExit) {
         //Check if there are any messages.
@@ -186,7 +198,7 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
-    //Disconnected. *** Never runs at the moment. Add a way of making the server exit. Maybe handle Ctrl-C? ***
+    //User requested an exit.
     Logger.Debug("main(): Exiting...");
 
     std::cout << "Exiting..." << std::endl;
