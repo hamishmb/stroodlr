@@ -20,6 +20,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
+#include <signal.h> //POSIX-only.
 
 #include "loggertools.h"
 
@@ -70,6 +71,8 @@ vector<string> split(const string& mystring, const string delimiters) {
 
 void RequestExit(int Signal) {
     //Attempts to get the program to exit nicely.
+    signal(SIGINT, RequestExit); //Re-add the handler.
+
     Logger.Error("Tools: RequestExit(): User requested exit with CTRL-C! Attempting to exit cleanly...");
 
     RequestedExit = true;

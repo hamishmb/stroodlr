@@ -121,13 +121,13 @@ void ListMessages(queue<vector<char> >& In) {
 }
 
 void SendToServer(const vector<char>& Msg, queue<vector<char> >& In, queue<vector<char> >& Out) {
-    //Sends the given message to the local server and waits for an ACK(nowledgement). *** TODO If ACK is very slow, try again ***
+    //Sends the given message to the local server and waits for an acknowledgement). *** TODO If ACK is very slow, try again *** *** Will need to change this later cos if there's a high volume of messages it might fail ***
     Logger.Info("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
 
     //Push it to the message queue.
     Out.push(Msg);
 
-    //Wait until an "ACK" has arrived.
+    //Wait until an \x06 (ACK) has arrived.
     Logger.Debug("Client Tools: SendToServer(): Waiting for ACK...");
     while (In.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(200));
 

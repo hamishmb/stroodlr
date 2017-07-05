@@ -24,7 +24,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <chrono>
 #include <thread>
 #include <cctype>
-#include <signal.h> //POSIX-only.
+#include <signal.h> //POSIX-only. *** Using it causes issues in this one, because of the thread. ***
 
 //Custom headers.
 #include "../include/tools.h"

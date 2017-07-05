@@ -145,8 +145,8 @@ int main(int argc, char* argv[]) {
         while (!InMessageQueue.empty()) {
             Logger.Debug("main(): Message from local client: "+ConvertToString(InMessageQueue.front())+"...");
 
-            Logger.Debug("main(): Sending ACKnowledgement...");
-            OutMessageQueue.push(ConvertToVectorChar("ACK"));
+            Logger.Debug("main(): Sending acknowledgement...");
+            OutMessageQueue.push(ConvertToVectorChar("\x06"));
 
             //If the message was "CLIENTGOODBYE", close the socket and make a new one.
             if (ConvertToString(InMessageQueue.front()) == "CLIENTGOODBYE") {
