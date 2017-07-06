@@ -51,6 +51,7 @@ void Sockets::StartHandler() {
     //Starts the handler thread and then returns.
     //Setup.
     ReadyForTransmission = false;
+    Reconnected = false;
     HandlerShouldExit = false;
     HandlerExited = false;
 
@@ -70,6 +71,15 @@ bool Sockets::IsReady() {
 
 }
 
+bool Sockets::JustReconnected() {
+    //Clear and return Reconnected.
+    bool Temp = Reconnected;
+    Reconnected = false;
+
+    return Temp;
+
+}
+
 void Sockets::WaitForHandlerToExit() {
     HandlerThread.join();
 
@@ -79,7 +89,6 @@ bool Sockets::HandlerHasExited() {
     return HandlerExited;
 
 }
-
 //---------- Controller Functions ----------
 void Sockets::RequestHandlerExit() {
     HandlerShouldExit = true;
@@ -89,6 +98,7 @@ void Sockets::RequestHandlerExit() {
 void Sockets::Reset() {
     //Variables for tracking status of the other thread.
     ReadyForTransmission = false;
+    Reconnected = false;
     HandlerShouldExit = false;
     HandlerExited = false;
 
@@ -173,8 +183,9 @@ void Sockets::Handler(Sockets* Ptr) {
             //Wait for the socket to reconnect or we're requested to exit.
             Ptr->CreateAndConnect(Ptr);
 
-            //If reconnection was successful, tell user.
+            //If reconnection was successful, set flag and tell user.
             if (!Ptr->HandlerShouldExit) {
+                Ptr->Reconnected = true;
                 std::cout << "Reconnected to peer." << std::endl << std::endl;
 
             }
@@ -184,7 +195,7 @@ void Sockets::Handler(Sockets* Ptr) {
     //Flag that we've exited.
     Ptr->HandlerExited = true;
 
-    //Deregister signal handler, so we can exit if we get stuck while connectiing again.
+    //Deregister signal handler, so we can exit if we get stuck while connecting again.
     //signal(SIGINT, SIG_DFL);
 
 }
@@ -350,13 +361,13 @@ int Sockets::AttemptToReadFromSocket() {
 
         }
 
-        //There must be some data, so read it.
-        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Found data, reading it...");
+        //Try to read some data.
+        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Attempting to read some data...");
 
         Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
 
         if (Error == boost::asio::error::eof)
-            return -1; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+            return -1; // Connection closed cleanly by peer.
 
         else if (Error)
             throw boost::system::system_error(Error); // Some other error.

@@ -35,6 +35,7 @@ private:
 
     //Variables for tracking status of the handler, and the socket.
     bool ReadyForTransmission = false;
+    bool Reconnected = false;
     bool HandlerShouldExit = false;
     bool HandlerExited = false;
 
@@ -73,6 +74,7 @@ public:
 
     //Info getter functions.
     bool IsReady();
+    bool JustReconnected();
     void WaitForHandlerToExit();
     bool HandlerHasExited();
 

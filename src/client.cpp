@@ -155,12 +155,16 @@ int main(int argc, char* argv[])
         Logger.Debug("main(): Waiting for user input...");
         getline(std::cin, command);
 
-        //It's possible that at this point we have lost the connection and failed to reconnect, so check.
+        //It's possible that at this point we have lost the connection and failed to reconnect/reconnected, so check.
         if (Plug.HandlerHasExited()) {
             //Connection lost and couldn't reconnect to client.
             Logger.Critical("Couldn't reconnect to server! Exiting...");
 
             exit(1);
+
+        } else if (Plug.JustReconnected()) {
+            //We just reconnected. Forget anything the user had been typing and go back to the start of the loop.
+            continue;
 
         }
 
