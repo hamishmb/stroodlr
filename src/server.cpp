@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
     Socket.StartHandler();
 
-    //Wait until we're connected or requested to exit because of a connection error..
+    //Wait until we're connected or have to exit because of a connection error..
     while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     if (Socket.HandlerHasExited()) {
@@ -104,7 +104,24 @@ int main(int argc, char* argv[]) {
 
     }
 
-    while (ConnectedToClient(InMessageQueue) && !::RequestedExit) {
+    while (!::RequestedExit) {
+        //Check that we're still connected.
+        if (!Socket.IsReady()) {
+            Logger.Info("main(): Client has disconnected. Waiting for the socket to reconnect...");
+
+            //Wait until we're connected or have to exit because of a connection error..
+            while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            if (Socket.HandlerHasExited()) {
+                //Couldn't reconnect to client.
+                Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
+
+                exit(1);
+
+            }
+
+        }
+
         //Check if there are any messages.
         Logger.Debug("main(): Checking for messages...");
 
@@ -114,46 +131,7 @@ int main(int argc, char* argv[]) {
             Logger.Debug("main(): Sending acknowledgement...");
             Socket.Write(ConvertToVectorChar("\x06"));
 
-            //If the message was "CLIENTGOODBYE", close the socket and make a new one.
-            if (ConvertToString(Socket.Read()) == "CLIENTGOODBYE") {
-                Logger.Debug("main(): Received GOODBYE from local client...");
-
-                //Give the output thread time to write the message.
-                Logger.Info("main(): Client disconnected. Resetting the socket and waiting for a connection...");
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-                //Request the client thread to exit.
-                Socket.RequestHandlerExit();
-
-                //Wait until it exits.
-                Socket.WaitForHandlerToExit();
-
-                //Restart the thread.
-                Logger.Info("main(): Resetting Socket...");
-                Socket.Reset();
-
-                Socket.SetPortNumber(PortNumber);
-
-                Socket.StartHandler();
-
-                //Wait until we're connected or requested to exit because of a connection error.
-                Logger.Info("main(): Waiting for a connection...");
-
-                while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-                if (Socket.HandlerHasExited()) {
-                    //Couldn't connect to client.
-                    Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
-
-                    exit(1);
-
-                }
-
-                //We are now connected the the client. Start the handler thread to send messages back and forth.
-                Logger.Info("main(): We are now reconnected to the client...");
-
-            }
-
+            //Remove the message.
             Socket.Pop();
         }
 

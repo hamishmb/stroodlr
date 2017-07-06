@@ -128,7 +128,24 @@ int main(int argc, char* argv[])
     std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     //Main input loop.
-    while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
+    while (!::RequestedExit) {
+        //Check that we're still connected.
+        if (!Plug.IsReady()) {
+            Logger.Info("main(): Server has disconnected. Waiting for the socket to reconnect...");
+
+            //Wait until we're connected or have to exit because of a connection error..
+            while (!Plug.IsReady() && !Plug.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+            if (Plug.HandlerHasExited()) {
+                //Couldn't reconnect to client.
+                Logger.CriticalWCerr("Couldn't reconnect to server! Exiting...");
+
+                exit(1);
+
+            }
+
+        }
+
         Logger.Debug("main(): Checking for new messages...");
         CheckForMessages(&Plug);
 
@@ -241,7 +258,7 @@ int main(int argc, char* argv[])
 
     //Say goodbye to server.
     Logger.Info("main(): Saying goodbye to server...");
-    SendToServer(ConvertToVectorChar("CLIENTGOODBYE"), &Plug);
+    SendToServer(ConvertToVectorChar("PEERGOODBYE"), &Plug);
 
     //Exit if we broke out of the loop.
     Logger.Info("main(): Done. Saying goodbye to user and requesting that all threads exit...");

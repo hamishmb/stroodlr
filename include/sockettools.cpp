@@ -24,6 +24,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "sockettools.h"
 #include "loggertools.h"
+#include "tools.h"
 
 using std::string;
 using std::vector;
@@ -104,11 +105,9 @@ void Sockets::Reset() {
 
 }
 
-//---------- Handler Thread ----------
-void Sockets::Handler(Sockets* Ptr) {
-    //Handles connecting, receiving incoming data, and sending outgoing data.
-    int Sent;
-
+//---------- Handler Thread & Functions ----------
+void Sockets::CreateAndConnect(Sockets* Ptr) {
+    //Handles connecting/reconnecting the socket.
     //Handle any errors while connecting.
     try {
         if (Ptr->Type == "Plug") {
@@ -132,12 +131,23 @@ void Sockets::Handler(Sockets* Ptr) {
         std::cerr << "Error: " << e.what() << std::endl;
         std::cerr << "Sockets::Handler(): Exiting..." << std::endl;
 
-        Ptr->HandlerExited = true;
+        //Make the handler exit.
+        Ptr->HandlerShouldExit = true;
 
         return;
 
     }
 
+}
+
+void Sockets::Handler(Sockets* Ptr) {
+    //Handlers setup, send/receive, and maintenance of socket (reconnections).
+    int Sent;
+
+    //Setup the socket.
+    Ptr->CreateAndConnect(Ptr);
+
+    //Keep sending and receiving messages until we're asked to exit.
     while (!Ptr->HandlerShouldExit) {
         //Send any pending messages.
         Sent = Ptr->SendAnyPendingMessages();
@@ -145,6 +155,21 @@ void Sockets::Handler(Sockets* Ptr) {
         //Receive messages if there are any.
         Ptr->AttemptToReadFromSocket();
 
+        //If the peer left, set ReadyForTransmission = false.
+        if (Ptr->HasPendingData() && (ConvertToString(Ptr->Read()) == "PEERGOODBYE")) {
+            //Send an ACK before we exit.
+            Ptr->Write(ConvertToVectorChar("\x06"));
+            Sent = Ptr->SendAnyPendingMessages();
+
+            //Reset the socket. Also sets the tracker.
+            Ptr->Reset();
+
+            //Wait for the socket to reconnect or we're requested to exit.
+            while (!Ptr->ReadyForTransmission && !Ptr->HandlerShouldExit) {
+                Ptr->CreateAndConnect(Ptr);
+
+            }
+        }
     }
 
     //Flag that we've exited.

@@ -33,7 +33,7 @@ private:
     std::thread HandlerThread;
     std::string Type;
 
-    //Variables for tracking status of the other thread.
+    //Variables for tracking status of the handler, and the socket.
     bool ReadyForTransmission = false;
     bool HandlerShouldExit = false;
     bool HandlerExited = false;
@@ -80,8 +80,9 @@ public:
     void RequestHandlerExit();
     void Reset();
 
-    //Handler.
+    //Handler functions.
     static void Handler(Sockets* Ptr);
+    void CreateAndConnect(Sockets* Ptr);
 
     //Connection functions (Plug).
     void CreatePlug();
