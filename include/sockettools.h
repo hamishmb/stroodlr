@@ -34,6 +34,7 @@ private:
     std::string Type;
 
     //Variables for tracking status of the handler, and the socket.
+    bool Verbose = true;
     bool ReadyForTransmission = false;
     bool Reconnected = false;
     bool HandlerShouldExit = false;
@@ -70,6 +71,7 @@ public:
     //Setup functions.
     void SetPortNumber(const int& PortNo);
     void SetServerAddress(const std::string& ServerAdd); //Only needed when creating a plug.
+    void SetConsoleOutput(const bool State); //Can tell us not to output any message to console (used in server).
     void StartHandler();
 
     //Info getter functions.

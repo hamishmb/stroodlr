@@ -90,6 +90,7 @@ int main(int argc, char* argv[]) {
     Sockets Socket("Socket");
 
     Socket.SetPortNumber(PortNumber);
+    Socket.SetConsoleOutput(false);
 
     Socket.StartHandler();
 

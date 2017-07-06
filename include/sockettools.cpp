@@ -47,6 +47,12 @@ void Sockets::SetServerAddress(const string& ServerAdd) {
 
 }
 
+void Sockets::SetConsoleOutput(const bool State) {
+    //Can tell us not to output any message to console (used in server).
+    Verbose = State;
+
+}
+
 void Sockets::StartHandler() {
     //Starts the handler thread and then returns.
     //Setup.
@@ -141,8 +147,12 @@ void Sockets::CreateAndConnect(Sockets* Ptr) {
 
     } catch (boost::system::system_error const& e) {
         Logger.Critical("Socket Tools: Sockets::CreateAndConnect(): Error connecting: "+static_cast<string>(e.what())+". Exiting...");
-        std::cerr << "Connecting Failed: " << e.what() << std::endl;
-        std::cerr << "Press ENTER to exit." << std::endl;
+
+        if (Ptr->Verbose) {
+            std::cerr << "Connecting Failed: " << e.what() << std::endl;
+            std::cerr << "Press ENTER to exit." << std::endl;
+
+        }
 
         //Make the handler exit.
         Ptr->HandlerShouldExit = true;
@@ -175,7 +185,10 @@ void Sockets::Handler(Sockets* Ptr) {
 
         //Check if the peer left.
         if (ReadResult == -1) {
-            std::cout << std::endl << std::endl << "Lost connection to peer. Reconnecting..." << std::endl;
+            if (Ptr->Verbose) {
+                std::cout << std::endl << std::endl << "Lost connection to peer. Reconnecting..." << std::endl;
+
+            }
 
             //Reset the socket. Also sets the tracker.
             Ptr->Reset();
@@ -186,8 +199,11 @@ void Sockets::Handler(Sockets* Ptr) {
             //If reconnection was successful, set flag and tell user.
             if (!Ptr->HandlerShouldExit) {
                 Ptr->Reconnected = true;
-                std::cout << "Reconnected to peer." << std::endl << std::endl;
 
+                if (Ptr->Verbose) {
+                    std::cout << "Reconnected to peer." << std::endl << std::endl;
+
+                }
             }
         }
     }
