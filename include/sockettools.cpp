@@ -209,18 +209,19 @@ void Sockets::ConnectSocket() {
 
 //--------- Read/Write Functions ----------
 void Sockets::Write(vector<char> Msg) {
-    //Pushes a message to the outgoing message queue so it can be written later.
+    //Pushes a message to the outgoing message queue so it can be written later by the handler thread.
     OutgoingQueue.push(Msg);
 
 }
 
 bool Sockets::HasPendingData() {
-    //Returns true/false if there is/isn't any data to read, respectively.
+    //Returns true if there's data on the queue to read, else false.
     return !IncomingQueue.empty();
 
 }
 
 vector<char> Sockets::Read() {
+    //Returns the item at the front of IncomingQueue.
     vector<char> Temp = IncomingQueue.front();
 
     return Temp;
@@ -228,7 +229,12 @@ vector<char> Sockets::Read() {
 }
 
 void Sockets::Pop() {
-    IncomingQueue.pop();
+    //Clears the front element from IncomingQueue. Prevents crash also if the queue is empty.
+    if (!IncomingQueue.empty()) {
+        IncomingQueue.pop();
+
+    }
+
 }
 
 //---------- Other Functions ----------

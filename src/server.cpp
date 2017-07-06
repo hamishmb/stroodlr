@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     Logger.SetLevel("Info");
     int PortNumber = 50000;
     string Temp;
-    bool Pop = true;
+    bool Continue = true;
 
     //Parse commandline options.
     try {
@@ -114,12 +114,12 @@ int main(int argc, char* argv[]) {
             Logger.Debug("main(): Sending acknowledgement...");
             Socket.Write(ConvertToVectorChar("\x06"));
 
-            //If the message was "CLIENTGOODBYE", close the socket and make a new one. *** Make a reset method for Sockets that does this ***
+            //If the message was "CLIENTGOODBYE", close the socket and make a new one.
             if (ConvertToString(Socket.Read()) == "CLIENTGOODBYE") {
                 Logger.Debug("main(): Received GOODBYE from local client...");
 
                 //Give the output thread time to write the message.
-                Logger.Info("main(): Client disconnected. Making a new socket and waiting for a connection...");
+                Logger.Info("main(): Client disconnected. Resetting the socket and waiting for a connection...");
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
                 //Request the client thread to exit.
@@ -129,14 +129,16 @@ int main(int argc, char* argv[]) {
                 Socket.WaitForHandlerToExit();
 
                 //Restart the thread.
-                Logger.Info("main(): Restarting message bus thread...");
+                Logger.Info("main(): Resetting Socket...");
                 Socket.Reset();
 
                 Socket.SetPortNumber(PortNumber);
 
                 Socket.StartHandler();
 
-                //Wait until we're connected or requested to exit because of a connection error..
+                //Wait until we're connected or requested to exit because of a connection error.
+                Logger.Info("main(): Waiting for a connection...");
+
                 while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
                 if (Socket.HandlerHasExited()) {
@@ -150,18 +152,9 @@ int main(int argc, char* argv[]) {
                 //We are now connected the the client. Start the handler thread to send messages back and forth.
                 Logger.Info("main(): We are now reconnected to the client...");
 
-                //Hacky bit.
-                Pop = false;
-
             }
 
-            if (Pop) {
-                Socket.Pop();
-
-            } else {
-                Pop = true;
-
-            }
+            Socket.Pop();
         }
 
         //Wait for 1 second before doing anything.
@@ -175,6 +168,7 @@ int main(int argc, char* argv[]) {
 
     ::RequestedExit = true;
 
+    //Stop the socket handler so it can be safely destructed.
     Socket.RequestHandlerExit();
     Socket.WaitForHandlerToExit();
 
