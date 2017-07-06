@@ -33,7 +33,7 @@ bool RequestedExit = false;
 
 //Global. Must explicitly declare external linkage for constants if shared between files and header not included.
 extern const string Version = "0.9";
-extern const string ReleaseDate = "4/7/2017";
+extern const string ReleaseDate = "6/7/2017";
 
 //Allow us to use the logger here.
 extern Logging Logger;

@@ -141,8 +141,9 @@ void Sockets::CreateAndConnect(Sockets* Ptr) {
 }
 
 void Sockets::Handler(Sockets* Ptr) {
-    //Handlers setup, send/receive, and maintenance of socket (reconnections).
+    //Handles setup, send/receive, and maintenance of socket (reconnections).
     int Sent;
+    int ReadResult;
 
     //Setup the socket.
     Ptr->CreateAndConnect(Ptr);
@@ -153,14 +154,10 @@ void Sockets::Handler(Sockets* Ptr) {
         Sent = Ptr->SendAnyPendingMessages();
 
         //Receive messages if there are any.
-        Ptr->AttemptToReadFromSocket();
+        ReadResult = Ptr->AttemptToReadFromSocket();
 
-        //If the peer left, set ReadyForTransmission = false.
-        if (Ptr->HasPendingData() && (ConvertToString(Ptr->Read()) == "PEERGOODBYE")) {
-            //Send an ACK before we exit.
-            Ptr->Write(ConvertToVectorChar("\x06"));
-            Sent = Ptr->SendAnyPendingMessages();
-
+        //Check if the peer left.
+        if (ReadResult == -1) {
             //Reset the socket. Also sets the tracker.
             Ptr->Reset();
 
@@ -298,13 +295,14 @@ int Sockets::SendAnyPendingMessages() {
     return true;
 }
 
-void Sockets::AttemptToReadFromSocket() {
+int Sockets::AttemptToReadFromSocket() {
     //Attempts to read some data from the socket.
     Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Attempting to read some data from the socket...");
 
     //Setup.
     std::vector<char>* MyBuffer = new std::vector<char> (128, '#');
     boost::system::error_code Error;
+    int Result;
 
     try {
         //This is a solution I found on Stack Overflow, but it means this is no longer platform independant :( I'll keep researching.
@@ -326,12 +324,17 @@ void Sockets::AttemptToReadFromSocket() {
         //Don't use mutexes here (blocks writing).
         Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Waiting for data...");
 
-        select(nativeSocket+1,&fileDescriptorSet,NULL,NULL,&timeStruct);
+        Result = select(nativeSocket+1, &fileDescriptorSet, NULL, NULL, &timeStruct);
 
         if (!FD_ISSET(nativeSocket, &fileDescriptorSet)) {
             //We timed-out. Return.
             Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Timed out. Giving up for now...");
-            return;
+            return 0;
+
+        } else if (Result == -1) {
+            //Error. Socket is probably closed.
+            return -1;
+
         }
 
         //There must be some data, so read it.
@@ -340,7 +343,7 @@ void Sockets::AttemptToReadFromSocket() {
         Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
 
         if (Error == boost::asio::error::eof)
-            return; // Connection closed cleanly by peer. *** HANDLE BETTER ***
+            return -1; // Connection closed cleanly by peer. *** HANDLE BETTER ***
 
         else if (Error)
             throw boost::system::system_error(Error); // Some other error.
@@ -353,9 +356,13 @@ void Sockets::AttemptToReadFromSocket() {
 
         Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Done.");
 
+        return Result;
+
     } catch (std::exception& err) {
         std::cerr << "Error: " << err.what() << std::endl;
         //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
+        return -1;
+
     }
 }
 

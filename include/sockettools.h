@@ -100,6 +100,6 @@ public:
 
     //Other function declarations.
     int SendAnyPendingMessages();
-    void AttemptToReadFromSocket();
+    int AttemptToReadFromSocket();
 
 };
