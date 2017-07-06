@@ -63,7 +63,7 @@ void MessageBus(int PortNumber) {
     //Setup.
     bool Sent = false;
 
-    //Setup Socket->
+    //Setup Socket.
     Sockets Socket("Socket");
 
     Socket.SetPortNumber(PortNumber);
@@ -122,18 +122,17 @@ int main(int argc, char* argv[]) {
     //Logger.Info("main(): Starting message bus thread...");
     //ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
 
-    //Setup Socket-> *** Won't need to use sharped_ptr after reset method has been made ***
-    std::shared_ptr<Sockets> Socket;
-    Socket = std::shared_ptr<Sockets>(new Sockets("Socket"));
+    //Setup Socket.
+    Sockets Socket("Socket");
 
-    Socket->SetPortNumber(PortNumber);
+    Socket.SetPortNumber(PortNumber);
 
-    Socket->StartHandler();
+    Socket.StartHandler();
 
     //Wait until we're connected or requested to exit because of a connection error..
-    while (!Socket->IsReady() && !Socket->HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    if (Socket->HandlerHasExited()) {
+    if (Socket.HandlerHasExited()) {
         //Couldn't connect to client.
         Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
 
@@ -145,14 +144,14 @@ int main(int argc, char* argv[]) {
         //Check if there are any messages.
         Logger.Debug("main(): Checking for messages...");
 
-        while (Socket->HasPendingData()) {
-            Logger.Debug("main(): Message from local client: "+ConvertToString(Socket->Read())+"...");
+        while (Socket.HasPendingData()) {
+            Logger.Debug("main(): Message from local client: "+ConvertToString(Socket.Read())+"...");
 
             Logger.Debug("main(): Sending acknowledgement...");
-            Socket->Write(ConvertToVectorChar("\x06"));
+            Socket.Write(ConvertToVectorChar("\x06"));
 
             //If the message was "CLIENTGOODBYE", close the socket and make a new one. *** Make a reset method for Sockets that does this ***
-            if (ConvertToString(Socket->Read()) == "CLIENTGOODBYE") {
+            if (ConvertToString(Socket.Read()) == "CLIENTGOODBYE") {
                 Logger.Debug("main(): Received GOODBYE from local client...");
 
                 //Give the output thread time to write the message.
@@ -160,23 +159,23 @@ int main(int argc, char* argv[]) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
                 //Request the client thread to exit.
-                Socket->RequestHandlerExit();
+                Socket.RequestHandlerExit();
 
                 //Wait until it exits.
-                Socket->WaitForHandlerToExit();
+                Socket.WaitForHandlerToExit();
 
                 //Restart the thread.
                 Logger.Info("main(): Restarting message bus thread...");
-                Socket = std::shared_ptr<Sockets>(new Sockets("Socket"));
+                Socket.Reset();
 
-                Socket->SetPortNumber(PortNumber);
+                Socket.SetPortNumber(PortNumber);
 
-                Socket->StartHandler();
+                Socket.StartHandler();
 
                 //Wait until we're connected or requested to exit because of a connection error..
-                while (!Socket->IsReady() && !Socket->HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-                if (Socket->HandlerHasExited()) {
+                if (Socket.HandlerHasExited()) {
                     //Couldn't connect to client.
                     Logger.CriticalWCerr("Couldn't connect to client! Exiting...");
 
@@ -193,7 +192,7 @@ int main(int argc, char* argv[]) {
             }
 
             if (Pop) {
-                Socket->Pop();
+                Socket.Pop();
 
             } else {
                 Pop = true;
@@ -212,8 +211,8 @@ int main(int argc, char* argv[]) {
 
     ::RequestedExit = true;
 
-    Socket->RequestHandlerExit();
-    Socket->WaitForHandlerToExit();
+    Socket.RequestHandlerExit();
+    Socket.WaitForHandlerToExit();
 
     return 0;
 }

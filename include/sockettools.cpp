@@ -79,9 +79,28 @@ bool Sockets::HandlerHasExited() {
 
 }
 
-//---------- Info Setter Functions ----------
+//---------- Controller Functions ----------
 void Sockets::RequestHandlerExit() {
     HandlerShouldExit = true;
+
+}
+
+void Sockets::Reset() {
+    //Variables for tracking status of the other thread.
+    ReadyForTransmission = false;
+    HandlerShouldExit = false;
+    HandlerExited = false;
+
+    //Queues.
+    IncomingQueue = queue<vector<char> >();
+    OutgoingQueue = queue<vector<char> >();
+
+    //Boost stuff.
+    Socket = nullptr;
+    acceptor = nullptr;
+    resolver = nullptr;    
+    io_service->stop();
+    io_service = nullptr;
 
 }
 

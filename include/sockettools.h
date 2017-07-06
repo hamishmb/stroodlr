@@ -76,8 +76,9 @@ public:
     void WaitForHandlerToExit();
     bool HandlerHasExited();
 
-    //Info setter functions.
+    //Controller functions.
     void RequestHandlerExit();
+    void Reset();
 
     //Handler.
     static void Handler(Sockets* Ptr);
