@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
     //Display greeting.
     std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
     std::cout << "For help, type \"HELP\"" << std::endl;
-    std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
+    std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl << std::endl;
 
     //Main input loop.
     while (!::RequestedExit) {
@@ -138,7 +138,7 @@ int main(int argc, char* argv[])
 
             if (Plug.HandlerHasExited()) {
                 //Couldn't reconnect to client.
-                Logger.CriticalWCerr("Couldn't reconnect to server! Exiting...");
+                Logger.Critical("Couldn't reconnect to server! Exiting...");
 
                 exit(1);
 
@@ -154,6 +154,16 @@ int main(int argc, char* argv[])
 
         Logger.Debug("main(): Waiting for user input...");
         getline(std::cin, command);
+
+        //It's possible that at this point we have lost the connection and failed to reconnect, so check.
+        if (Plug.HandlerHasExited()) {
+            //Connection lost and couldn't reconnect to client.
+            Logger.Critical("Couldn't reconnect to server! Exiting...");
+
+            exit(1);
+
+        }
+
         splitcommand = split(command, " ");
 
         //Convert the first part of the text (the "command") to upper case.

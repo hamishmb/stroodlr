@@ -111,25 +111,28 @@ void Sockets::CreateAndConnect(Sockets* Ptr) {
     //Handle any errors while connecting.
     try {
         if (Ptr->Type == "Plug") {
+            Logger.Debug("Socket Tools: Sockets::CreateAndConnect(): Creating and connecting plug...");
             Ptr->CreatePlug();
             Ptr->ConnectPlug();
 
         } else if (Ptr->Type == "Socket") {
+            Logger.Debug("Socket Tools: Sockets::CreateAndConnect(): Creating and connecting socket...");
             Ptr->CreateSocket();
             Ptr->ConnectSocket();
 
         }
 
         //We are now connected.
+        Logger.Debug("Socket Tools: Sockets::CreateAndConnect(): Done!");
         Ptr->ReadyForTransmission = true;
 
         //Setup signal handler.
         //signal(SIGINT, RequestExit);
 
     } catch (boost::system::system_error const& e) {
-        Logger.Critical("Socket Tools: Sockets::Handler(): Error connecting: "+static_cast<string>(e.what())+". Exiting...");
-        std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "Sockets::Handler(): Exiting..." << std::endl;
+        Logger.Critical("Socket Tools: Sockets::CreateAndConnect(): Error connecting: "+static_cast<string>(e.what())+". Exiting...");
+        std::cerr << "Connecting Failed: " << e.what() << std::endl;
+        std::cerr << "Press ENTER to exit." << std::endl;
 
         //Make the handler exit.
         Ptr->HandlerShouldExit = true;
@@ -142,11 +145,15 @@ void Sockets::CreateAndConnect(Sockets* Ptr) {
 
 void Sockets::Handler(Sockets* Ptr) {
     //Handles setup, send/receive, and maintenance of socket (reconnections).
+    Logger.Debug("Socket Tools: Sockets::Handler(): Starting up...");
     int Sent;
     int ReadResult;
 
     //Setup the socket.
+    Logger.Debug("Socket Tools: Sockets::Handler(): Calling Ptr->CreateAndConnect to set the socket up...");
     Ptr->CreateAndConnect(Ptr);
+
+    Logger.Debug("Socket Tools: Sockets::Handler(): Done! Entering main loop.");
 
     //Keep sending and receiving messages until we're asked to exit.
     while (!Ptr->HandlerShouldExit) {
@@ -158,12 +165,17 @@ void Sockets::Handler(Sockets* Ptr) {
 
         //Check if the peer left.
         if (ReadResult == -1) {
+            std::cout << std::endl << std::endl << "Lost connection to peer. Reconnecting..." << std::endl;
+
             //Reset the socket. Also sets the tracker.
             Ptr->Reset();
 
             //Wait for the socket to reconnect or we're requested to exit.
-            while (!Ptr->ReadyForTransmission && !Ptr->HandlerShouldExit) {
-                Ptr->CreateAndConnect(Ptr);
+            Ptr->CreateAndConnect(Ptr);
+
+            //If reconnection was successful, tell user.
+            if (!Ptr->HandlerShouldExit) {
+                std::cout << "Reconnected to peer." << std::endl << std::endl;
 
             }
         }
@@ -333,6 +345,7 @@ int Sockets::AttemptToReadFromSocket() {
 
         } else if (Result == -1) {
             //Error. Socket is probably closed.
+            Logger.Error("Socket Tools: Sockets::AttemptToReadFromSocket(): Socket is closed!");
             return -1;
 
         }
