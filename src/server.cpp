@@ -59,38 +59,6 @@ void Usage() {
 
 }
 
-void MessageBus(int PortNumber) {
-    //Setup.
-    bool Sent = false;
-
-    //Setup Socket.
-    Sockets Socket("Socket");
-
-    Socket.SetPortNumber(PortNumber);
-
-    //Handle any errors while connecting.
-    try {
-        Socket.StartHandler();
-
-        //Setup signal handler.
-        signal(SIGINT, RequestExit);
-
-    } catch (boost::system::system_error const& e) {
-        Logger.Critical("MessageBus(): Error connecting to client: "+static_cast<string>(e.what())+". MessageBus Exiting...");
-        std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "MessageBus Exiting..." << std::endl;
-
-        //Requesting exit from Main Thread.
-        ::RequestedExit = true;
-    }
-
-    //Deregister signal handler, so we can exit if we get stuck while connectiing again.
-    signal(SIGINT, SIG_DFL);
-
-    Logger.Debug("MessageBus(): Exiting...");
-
-}
-
 int main(int argc, char* argv[]) {
     //Setup the logger. *** Handle exceptions ***
     Logger.SetName("Stroodlr Server "+Version);
@@ -101,11 +69,10 @@ int main(int argc, char* argv[]) {
     std::cout << "Stroodlr Server " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Server "+Version+" Starting...");
 
-    //Set default options.
+    //Setup.
     Logger.SetLevel("Info");
     int PortNumber = 50000;
     string Temp;
-    std::shared_ptr<std::thread> ClientThread;
     bool Pop = true;
 
     //Parse commandline options.
@@ -118,9 +85,6 @@ int main(int argc, char* argv[]) {
         Usage();
 
     }
-
-    //Logger.Info("main(): Starting message bus thread...");
-    //ClientThread = std::shared_ptr<std::thread>(new std::thread(MessageBus, PortNumber));
 
     //Setup Socket.
     Sockets Socket("Socket");

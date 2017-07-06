@@ -62,39 +62,6 @@ void Usage() {
 
 }
 
-void MessageBus(string ServerAddress) {
-    //Setup.
-    int PortNumber = 50000;
-
-    //Setup socket.
-    Sockets Plug("Plug");
-
-    Plug.SetPortNumber(PortNumber);
-    Plug.SetServerAddress(ServerAddress);
-
-    Plug.StartHandler();
-
-    //Handle any errors while connecting.
-    try {
-        Plug.StartHandler();
-
-        //Setup signal handler.
-        signal(SIGINT, RequestExit);
-
-    } catch (boost::system::system_error const& e) {
-        Logger.Critical("MessageBus(): Error connecting to server: "+static_cast<string>(e.what())+". MessageBus Exiting...");
-        std::cerr << "Error: " << e.what() << std::endl;
-        std::cerr << "MessageBus Exiting..." << std::endl;
-
-        //Requesting exit from Main Thread.
-        ::RequestedExit = true;
-    }
-
-    //Deregister signal handler, so we can exit if we get stuck while connectiing again.
-    signal(SIGINT, SIG_DFL);
-
-}
-
 int main(int argc, char* argv[])
 {
     //Setup the logger. *** Handle exceptions ***
@@ -106,9 +73,17 @@ int main(int argc, char* argv[])
     std::cout << "Stroodlr Client " << Version << " Starting..." << std::endl;
     Logger.Info("Stroodlr Client "+Version+" Starting...");
 
-    //Set default options.
+    //Setup.
     Logger.SetLevel("Info");
     string ServerAddress = "localhost";
+    int PortNumber = 50000;
+
+    //Vars to hold temporary data *** Clean up ***
+    string command;
+    vector<string> splitcommand;
+    deque<string> UserInput;
+    string abouttosend;
+    string UpperCommand;
 
     //Parse the commandline options.
     try {
@@ -121,12 +96,6 @@ int main(int argc, char* argv[])
 
     }
 
-    //Logger.Info("main(): Starting message bus thread...");
-    //std::thread t1(MessageBus, ServerAddress);
-
-    //Setup.
-    int PortNumber = 50000;
-
     //Setup socket.
     Sockets Plug("Plug");
 
@@ -135,36 +104,28 @@ int main(int argc, char* argv[])
 
     Plug.StartHandler();
 
-    string command;
-    vector<string> splitcommand;
-    deque<string> UserInput;
-    string abouttosend;
-    string UpperCommand;
-
     Logger.Info("main(): Waiting for connection to server...");
     std::cout << std::endl << "Connecting to server..." << std::endl;
 
     //Wait until we're connected, or requested to exit.
     while (!Plug.IsReady() && !Plug.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    //If we're connected, display the greeting.
-    if (Plug.IsReady()) {
-        Logger.Info("main(): Connected...");
-        std::cout << "Connected!" << std::endl;
-
-        //Greet user and start waiting for commands.
-        //Display greeting.
-        std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
-        std::cout << "For help, type \"HELP\"" << std::endl;
-        std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
-
-    } else {
+    if (!Plug.IsReady()) {
         //Couldn't connect to server.
         Logger.CriticalWCerr("Couldn't connect to server! Exiting...");
 
         exit(1);
 
     }
+
+    Logger.Info("main(): Connected...");
+    std::cout << "Connected!" << std::endl;
+
+    //Greet user and start waiting for commands.
+    //Display greeting.
+    std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
+    std::cout << "For help, type \"HELP\"" << std::endl;
+    std::cout << "To quit, type \"QUIT\", \"Q\", \"EXIT\", or press CTRL-D" << std::endl;
 
     //Main input loop.
     while (ConnectedToServer(InMessageQueue) && !::RequestedExit) {
