@@ -25,7 +25,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "sockettools.h"
 #include "loggertools.h"
-#include "tools.h" //*** NEEDED? ***
+#include "tools.h"
 
 using std::string;
 using std::vector;

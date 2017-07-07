@@ -15,16 +15,11 @@ You should have received a copy of the GNU General Public License
 along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <vector> //*** REMOVE SOON ***
 #include <string>
-#include <queue> //*** REMOVE SOON ***
 #include <stdexcept>
 
-#include "tools.h" //*** NOT NEEDED? ***
 #include "loggertools.h"
 
-using std::queue;
-using std::vector;
 using std::string;
 
 //Allow us to use the logger here.
