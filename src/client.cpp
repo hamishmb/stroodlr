@@ -29,9 +29,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include "../include/tools.h"
 #include "../include/loggertools.h"
 #include "../include/clienttools.h"
-
-//Gets included via clienttools.h
-//#include "../include/sockettools.h"
+#include "../include/sockettools.h"
 
 using std::string;
 using std::vector;

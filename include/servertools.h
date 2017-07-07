@@ -15,5 +15,8 @@ You should have received a copy of the GNU General Public License
 along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//Only include once.
+#pragma once
+
 //Function declarations.
 void ParseCmdlineOptions(int& PortNumber, const int& argc, char* argv[]);
