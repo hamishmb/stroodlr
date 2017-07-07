@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <queue> //*** REMOVE SOON ***
 #include <deque>
 #include <vector> //*** REMOVE SOON ***
 #include <string>
@@ -30,5 +29,4 @@ void ShowHelp();
 void CheckForMessages(Sockets* const Ptr);
 void ListMessages(Sockets* const Ptr);
 void SendToServer(const std::vector<char>& Msg, Sockets* const Ptr); ///*** MOVE SOON ***
-bool ConnectedToServer(const std::queue<std::vector<char> >& InMessageQueue); //*** DEPRECATED ***
 std::string ParseCmdlineOptions(std::string& ServerAddress, const int& argc, char* argv[]);

@@ -18,7 +18,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector> //*** REMOVE SOON ***
 #include <string>
 #include <queue> //*** REMOVE SOON ***
-#include <boost/algorithm/string.hpp> //*** REMOVE SOON ***
 #include <stdexcept>
 
 #include "tools.h" //*** NOT NEEDED? ***
@@ -30,23 +29,6 @@ using std::string;
 
 //Allow us to use the logger here.
 extern Logging Logger;
-
-bool ConnectedToClient(const queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
-    //Tests if we're still connected to the local server.
-    Logger.Debug("Server Tools: ConnectedToClient(): Checking we're still connected to the client...");
-
-    if (InMessageQueue.empty()) {
-        return true;
-
-    }
-
-    vector<string> SplitVec;
-    string temp = ConvertToString(InMessageQueue.front());
-    boost::split(SplitVec, temp, boost::algorithm::is_any_of(" ")); //Need to assemble string from queue vec first.
-
-    return (SplitVec[0] != "Error:"); //As long at the message doesn't start with an error, we should be connected.
-
-} //*** DEPRECATED ***
 
 void ParseCmdlineOptions(int& PortNumber, const int& argc, char* argv[]) {
     //Parse commandline options.
