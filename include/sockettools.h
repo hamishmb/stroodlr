@@ -97,6 +97,7 @@ public:
 
     //R/W functions.
     void Write(std::vector<char> Msg);
+    void SendToPeer(const std::vector<char>& Msg); //Convenience function that waits for an acknowledgement before returning.
     bool HasPendingData();
     std::vector<char> Read();
     void Pop();

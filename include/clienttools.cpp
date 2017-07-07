@@ -16,11 +16,9 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <queue> //*** REMOVE SOON ***
 #include <deque>
 #include <vector>
 #include <string>
-#include <thread> //*** REMOVE SOON ***
 #include <chrono>
 #include <stdexcept>
 
@@ -28,7 +26,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include "loggertools.h"
 #include "sockettools.h"
 
-using std::queue;
 using std::deque;
 using std::vector;
 using std::string;
@@ -120,23 +117,6 @@ void ListMessages(Sockets* const Ptr) {
     Logger.Debug("Client Tools: ListMessages(): Done.");
     std::cout << "End of messages." << std::endl << std::endl;
 }
-
-void SendToServer(const vector<char>& Msg, Sockets* const Ptr) {
-    //Sends the given message to the local server and waits for an acknowledgement). *** TODO If ACK is very slow, try again *** *** Will need to change this later cos if there's a high volume of messages it might fail ***
-    Logger.Info("Client Tools: SendToServer(): Sending message "+ConvertToString(Msg)+" to server...");
-
-    //Push it to the message queue.
-    Ptr->Write(Msg);
-
-    //Wait until an \x06 (ACK) has arrived.
-    Logger.Debug("Client Tools: SendToServer(): Waiting for ACK...");
-    while (!(Ptr->HasPendingData())) std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-    //Remove the ACK from the queue.
-    Logger.Info("Client Tools: SendToServer(): Done.");
-    Ptr->Pop();
-
-} //*** MOVE SOMEWHERE ELSE (SOCKETTOOLS for convenience?) ***
 
 string ParseCmdlineOptions(string& ServerAddress, const int& argc, char* argv[]) {
     //Parse commandline options.

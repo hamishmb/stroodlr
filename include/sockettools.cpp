@@ -276,6 +276,23 @@ void Sockets::Write(vector<char> Msg) {
 
 }
 
+void Sockets::SendToPeer(const vector<char>& Msg) {
+    //Sends the given message to the peer and waits for an acknowledgement). A convenience function. *** TODO If ACK is very slow, try again *** *** Will need to change this later cos if there's a high volume of messages it might fail ***
+    Logger.Debug("Socket Tools: Sockets::SendToPeer(): Sending message "+ConvertToString(Msg)+" to peer...");
+
+    //Push it to the message queue.
+    Write(Msg);
+
+    //Wait until an \x06 (ACK) has arrived.
+    Logger.Debug("Socket Tools: Sockets::SendToPeer(): Waiting for acknowledgement...");
+    while (!HasPendingData()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    //Remove the ACK from the queue.
+    Logger.Info("Socket Tools: Sockets::SendToPeer(): Done.");
+    Pop();
+
+}
+
 bool Sockets::HasPendingData() {
     //Returns true if there's data on the queue to read, else false.
     return !IncomingQueue.empty();

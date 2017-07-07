@@ -241,9 +241,9 @@ int main(int argc, char* argv[])
             }
 
             //Check this isn't a control message used for client-server communication.
-            if (abouttosend == "CLIENTGOODBYE") {
+            if (abouttosend == "PEERGOODBYE") {
                 //Refuse to send it.
-                Logger.Error("main(): Won't send control message CLIENTGOODBYE. Warning user...");
+                Logger.Error("main(): Won't send control message PEERGOODBYE. Warning user...");
                 std::cout << std::endl << "You cannot send control messages." << std::endl << std::endl;
 
                 continue;
@@ -252,7 +252,7 @@ int main(int argc, char* argv[])
 
             //Send it.
             Logger.Info("main(): Sending the message...");
-            SendToServer(ConvertToVectorChar(abouttosend), &Plug);
+            Plug.SendToPeer(ConvertToVectorChar(abouttosend));
             Logger.Info("main(): Done.");
 
         } else {
@@ -266,10 +266,6 @@ int main(int argc, char* argv[])
 
         }
     }
-
-    //Say goodbye to server.
-    Logger.Info("main(): Saying goodbye to server...");
-    //SendToServer(ConvertToVectorChar("PEERGOODBYE"), &Plug);
 
     //Exit if we broke out of the loop.
     Logger.Info("main(): Done. Saying goodbye to user and requesting that all threads exit...");
