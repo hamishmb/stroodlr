@@ -21,6 +21,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <ctime>
 #include <stdexcept>
+#include <mutex>
 
 #include "loggertools.h"
 #include "tools.h"

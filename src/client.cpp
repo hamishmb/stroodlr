@@ -16,32 +16,29 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <queue>
 #include <deque>
 #include <vector>
-#include <boost/asio.hpp>
 #include <string>
 #include <chrono>
 #include <thread>
-#include <cctype>
+#include <cctype> //Character handling functions.
 #include <signal.h> //POSIX-only. *** Try to find an alternative solution - might not be thread-safe *** 
+#include <stdexcept>
 
 //Custom headers.
 #include "../include/tools.h"
 #include "../include/loggertools.h"
 #include "../include/clienttools.h"
+
+//Gets included via clienttools.h
 //#include "../include/sockettools.h"
 
 using std::string;
 using std::vector;
-using std::queue;
 using std::deque;
 
 //Logger.
 Logging Logger;
-
-queue<vector<char> > OutMessageQueue; //Queue holding a vector<char>, can be converted to string.
-queue<vector<char> > InMessageQueue;
 
 bool ReadyForTransmission = false;
 

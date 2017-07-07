@@ -21,10 +21,11 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/asio.hpp>
 #include <iostream>
 #include <thread>
+#include <stdexcept>
 
 #include "sockettools.h"
 #include "loggertools.h"
-#include "tools.h"
+#include "tools.h" //*** NEEDED? ***
 
 using std::string;
 using std::vector;

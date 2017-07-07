@@ -15,12 +15,13 @@ You should have received a copy of the GNU General Public License
 along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <vector>
+#include <vector> //*** REMOVE SOON ***
 #include <string>
-#include <queue>
-#include <boost/algorithm/string.hpp>
+#include <queue> //*** REMOVE SOON ***
+#include <boost/algorithm/string.hpp> //*** REMOVE SOON ***
+#include <stdexcept>
 
-#include "tools.h"
+#include "tools.h" //*** NOT NEEDED? ***
 #include "loggertools.h"
 
 using std::queue;
@@ -45,7 +46,7 @@ bool ConnectedToClient(const queue<vector<char> >& InMessageQueue) { //** Test t
 
     return (SplitVec[0] != "Error:"); //As long at the message doesn't start with an error, we should be connected.
 
-}
+} //*** DEPRECATED ***
 
 void ParseCmdlineOptions(int& PortNumber, const int& argc, char* argv[]) {
     //Parse commandline options.

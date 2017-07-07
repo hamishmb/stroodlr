@@ -17,7 +17,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
 //Includes.
 #include <string>
-#include <queue>
 #include <vector>
 
 //Function prototypes.

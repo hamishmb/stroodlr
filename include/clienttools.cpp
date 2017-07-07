@@ -16,13 +16,14 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <iostream>
-#include <queue>
+#include <queue> //*** REMOVE SOON ***
 #include <deque>
 #include <vector>
 #include <string>
-#include <thread>
+#include <thread> //*** REMOVE SOON ***
 #include <chrono>
 #include <boost/algorithm/string.hpp>
+#include <stdexcept>
 
 #include "tools.h"
 #include "loggertools.h"
@@ -135,7 +136,8 @@ void SendToServer(const vector<char>& Msg, Sockets* const Ptr) {
     //Remove the ACK from the queue.
     Logger.Info("Client Tools: SendToServer(): Done.");
     Ptr->Pop();
-}
+
+} //*** MOVE SOMEWHERE ELSE (SOCKETTOOLS for convenience?) ***
 
 bool ConnectedToServer(const queue<vector<char> >& InMessageQueue) { //** Test the socket instead/as well. ***
     //Tests if we're still connected to the local server.
@@ -152,7 +154,7 @@ bool ConnectedToServer(const queue<vector<char> >& InMessageQueue) { //** Test t
 
     return (SplitVec[0] != "Error:"); //As long at the message doesn't start with an error, we should be connected.
 
-}
+} //*** DEPRECATED ***
 
 string ParseCmdlineOptions(string& ServerAddress, const int& argc, char* argv[]) {
     //Parse commandline options.

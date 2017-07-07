@@ -16,24 +16,21 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <string>
-#include <queue>
 #include <vector>
 #include <boost/algorithm/string.hpp>
-#include <iostream>
 #include <signal.h> //POSIX-only.
 
 #include "loggertools.h"
 
 using std::string;
 using std::vector;
-using std::queue;
 
 //Shared globally. Used to tell threads to exit when the program is about to quit.
 bool RequestedExit = false;
 
 //Global. Must explicitly declare external linkage for constants if shared between files and header not included.
 extern const string Version = "0.9";
-extern const string ReleaseDate = "6/7/2017";
+extern const string ReleaseDate = "7/7/2017";
 
 //Allow us to use the logger here.
 extern Logging Logger;

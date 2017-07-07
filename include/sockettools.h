@@ -16,7 +16,6 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //Includes.
-#include <iostream>
 #include <string>
 #include <queue>
 #include <vector>
