@@ -62,6 +62,7 @@ if(Optimise)
     SET(GCC_CXX_COMPILE_FLAGS "${GCC_CXX_COMPILE_FLAGS} -O2")
 endif(Optimise)
 
+message(${GCC_CXX_COMPILE_FLAGS})
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_CXX_COMPILE_FLAGS}" )
 
 #---------- Library for the shared files ----------
