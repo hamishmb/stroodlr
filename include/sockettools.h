@@ -52,6 +52,22 @@ private:
     boost::asio::ip::tcp::resolver::iterator endpoint_iterator;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> acceptor;
 
+    //Handler functions.
+    static void Handler(Sockets* Ptr);
+    void CreateAndConnect(Sockets* Ptr);
+
+    //Connection functions (Plug).
+    void CreatePlug();
+    void ConnectPlug();
+
+    //Connection functions (Socket).
+    void CreateSocket();
+    void ConnectSocket();
+
+    //R/W Functions.
+    int SendAnyPendingMessages();
+    int AttemptToReadFromSocket();
+
 public:
     //Constructors.
     Sockets(std::string TheType) : Type(TheType) {};
@@ -86,27 +102,11 @@ public:
     void RequestHandlerExit();
     void Reset();
 
-    //Handler functions.
-    static void Handler(Sockets* Ptr);
-    void CreateAndConnect(Sockets* Ptr);
-
-    //Connection functions (Plug).
-    void CreatePlug();
-    void ConnectPlug();
-
-    //Connection functions (Socket).
-    void CreateSocket();
-    void ConnectSocket();
-
-    //R/W functions.
+    //Request R/W functions.
     void Write(std::vector<char> Msg);
     void SendToPeer(const std::vector<char>& Msg); //Convenience function that waits for an acknowledgement before returning.
     bool HasPendingData();
     std::vector<char> Read();
     void Pop();
-
-    //Other function declarations.
-    int SendAnyPendingMessages();
-    int AttemptToReadFromSocket();
 
 };
