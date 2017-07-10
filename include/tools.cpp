@@ -68,7 +68,9 @@ vector<string> split(const string& mystring, const string delimiters) {
 
 void RequestExit(int Signal) {
     //Attempts to get the program to exit nicely.
-    signal(SIGINT, RequestExit); //Re-add the handler.
+
+    //Make the signal handler deregister itself, so we can exit by doing CTRL-C again if we get stuck while connecting/for some other reason.
+    signal(SIGINT, SIG_DFL);
 
     Logger.Error("Tools: RequestExit(): User requested exit with CTRL-C! Attempting to exit cleanly...");
 

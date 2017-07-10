@@ -154,9 +154,6 @@ void Sockets::CreateAndConnect(Sockets* Ptr) {
         Logger.Debug("Socket Tools: Sockets::CreateAndConnect(): Done!");
         Ptr->ReadyForTransmission = true;
 
-        //Setup signal handler.
-        //signal(SIGINT, RequestExit);
-
     } catch (boost::system::system_error const& e) {
         Logger.Critical("Socket Tools: Sockets::CreateAndConnect(): Error connecting: "+static_cast<string>(e.what())+". Exiting...");
 
@@ -232,9 +229,6 @@ void Sockets::Handler(Sockets* Ptr) {
     //Flag that we've exited.
     Logger.Debug("Socket Tools: Sockets::Handler(): Exiting as per the request...");
     Ptr->HandlerExited = true;
-
-    //Deregister signal handler, so we can exit if we get stuck while connecting again.
-    //signal(SIGINT, SIG_DFL);
 
 }
 

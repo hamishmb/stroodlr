@@ -98,10 +98,16 @@ int main(int argc, char* argv[]) {
 
     }
 
+    //Setup signal handler.
+    signal(SIGINT, RequestExit);
+
     while (!::RequestedExit) {
         //Check that we're still connected.
         if (!Socket.IsReady()) {
             Logger.Info("main(): Client has disconnected. Waiting for the socket to reconnect...");
+
+            //Deregister signal handler, so we can exit if we get stuck while connecting.
+            signal(SIGINT, SIG_DFL);
 
             //Wait until we're connected or have to exit because of a connection error..
             while (!Socket.IsReady() && !Socket.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -113,6 +119,9 @@ int main(int argc, char* argv[]) {
                 exit(1);
 
             }
+
+            //Setup signal handler.
+            signal(SIGINT, RequestExit);
 
         }
 

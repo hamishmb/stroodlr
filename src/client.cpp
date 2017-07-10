@@ -121,6 +121,9 @@ int main(int argc, char* argv[])
     Logger.Info("main(): Connected...");
     std::cout << "Connected!" << std::endl;
 
+    //Setup signal handler.
+    signal(SIGINT, RequestExit);
+
     //Greet user and start waiting for commands.
     //Display greeting.
     std::cout << std::endl << "Welcome to Stroodlr, the local network chat client!" << std::endl;
@@ -133,6 +136,9 @@ int main(int argc, char* argv[])
         if (!Plug.IsReady()) {
             Logger.Info("main(): Server has disconnected. Waiting for the socket to reconnect...");
 
+            //Deregister signal handler, so we can exit if we get stuck while connecting.
+            signal(SIGINT, SIG_DFL);
+
             //Wait until we're connected or have to exit because of a connection error..
             while (!Plug.IsReady() && !Plug.HandlerHasExited()) std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -143,6 +149,9 @@ int main(int argc, char* argv[])
                 exit(1);
 
             }
+
+            //Setup signal handler, as we are now reconnected.
+            signal(SIGINT, RequestExit);
 
         }
 
@@ -207,6 +216,10 @@ int main(int argc, char* argv[])
 
         } else if (Plug.JustReconnected()) {
             //We just reconnected. Go back to the start of the loop.
+            continue;
+
+        } else if (!Plug.IsReady()) {
+            //Trying to reconnect.
             continue;
 
         }
