@@ -107,7 +107,10 @@ int main(int argc, char* argv[])
 
     if (!Plug.IsReady()) {
         //Couldn't connect to server.
-        Logger.CriticalWCerr("Couldn't connect to server! Exiting...");
+        Logger.Critical("Couldn't connect to server! Exiting...");
+
+        //Wait for ENTER key before exiting.
+        getline(std::cin, command);
 
         exit(1);
 
