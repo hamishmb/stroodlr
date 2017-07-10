@@ -37,7 +37,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../dist)
 
 #Use the C++11 standard.
-SET(GCC_CXX_COMPILE_FLAGS "-std=c++11")
+SET(GCC_CXX_COMPILE_FLAGS -std=c++11)
 message("-- C++ standard: C++11")
 
 #Accept options.
@@ -48,26 +48,24 @@ option(Optimise "Optimise" OFF)
 #Debug.
 if(Debug)
     #Build debug symbols.
-    SET(GCC_CXX_COMPILE_FLAGS "${GCC_CXX_COMPILE_FLAGS} -g")
+    SET(GCC_CXX_COMPILE_FLAGS ${GCC_CXX_COMPILE_FLAGS} -g)
     message(WARNING "-- This is a debug build")
 else(Debug)
     #Strip the debug symbols out.
-    SET(GCC_CXX_COMPILE_FLAGS "${GCC_CXX_COMPILE_FLAGS} -s")
+    SET(GCC_CXX_COMPILE_FLAGS ${GCC_CXX_COMPILE_FLAGS} -s)
 endif(Debug)
 
 #Optimise.
 if(Optimise)
     #Optimisation level 2.
     message(WARNING "-- Using compiler optimisations")
-    SET(GCC_CXX_COMPILE_FLAGS "${GCC_CXX_COMPILE_FLAGS} -O2")
+    SET(GCC_CXX_COMPILE_FLAGS ${GCC_CXX_COMPILE_FLAGS} -O2)
 endif(Optimise)
-
-message(${GCC_CXX_COMPILE_FLAGS})
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_CXX_COMPILE_FLAGS}" )
 
 #---------- Library for the shared files ----------
 #Stops cmake from compiling these files twice.
 #Currently a static library, but might be better to make it a shared library (saves disk space by not being statically linked with both server and client).
+add_compile_options(${GCC_CXX_COMPILE_FLAGS})
 add_library(StroodlrSharedCode include/tools.h include/tools.cpp include/loggertools.h include/loggertools.cpp include/sockettools.h include/sockettools.cpp)
 
 #---------- Target for the client project. ----------
@@ -84,6 +82,7 @@ find_package(Threads)
 set(CLIENT_SOURCE_FILES src/client.cpp include/clienttools.h include/clienttools.cpp)
 
 #Build and link client.
+add_compile_options(${GCC_CXX_COMPILE_FLAGS})
 add_executable(stroodlrc ${CLIENT_SOURCE_FILES})
 TARGET_LINK_LIBRARIES(stroodlrc LINK_PUBLIC ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 TARGET_LINK_LIBRARIES(stroodlrc LINK_PUBLIC StroodlrSharedCode)
@@ -95,6 +94,7 @@ project(stroodlrd)
 set(SERVER_SOURCE_FILES src/server.cpp include/servertools.h include/servertools.cpp)
 
 #Build and link server.
+add_compile_options(${GCC_CXX_COMPILE_FLAGS})
 add_executable(stroodlrd ${SERVER_SOURCE_FILES})
 TARGET_LINK_LIBRARIES(stroodlrd LINK_PUBLIC ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 TARGET_LINK_LIBRARIES(stroodlrd LINK_PUBLIC StroodlrSharedCode)
