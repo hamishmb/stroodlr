@@ -1,1 +1,0 @@
-/usr/bin/c++     -std=c++11 -s   CMakeFiles/stroodlrd.dir/src/server.cpp.o CMakeFiles/stroodlrd.dir/include/servertools.cpp.o  -o ../dist/stroodlrd /usr/lib/x86_64-linux-gnu/libboost_system.so -lpthread ../dist/libStroodlrSharedCode.a 

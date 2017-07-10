@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../dist/libStroodlrSharedCode.a  CMakeFiles/StroodlrSharedCode.dir/include/tools.cpp.o CMakeFiles/StroodlrSharedCode.dir/include/loggertools.cpp.o CMakeFiles/StroodlrSharedCode.dir/include/sockettools.cpp.o
-/usr/bin/ranlib ../dist/libStroodlrSharedCode.a
