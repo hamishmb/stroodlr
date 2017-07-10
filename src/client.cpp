@@ -79,6 +79,8 @@ int main(int argc, char* argv[])
     deque<string> UserInput;
     string abouttosend;
     string UpperCommand;
+    string KeepWriting = "";
+    string OldCommand = "";
 
     //Parse the commandline options.
     try {
@@ -147,11 +149,54 @@ int main(int argc, char* argv[])
         Logger.Debug("main(): Checking for new messages...");
         CheckForMessages(&Plug);
 
+        //If the user was midway through typing something and got interrupted, let them know what it was, and push it back onto the input stream.
+        if (command != "") {
+            std::cout << "You were just typing: " << command << std::endl;
+
+            while (KeepWriting == "") {
+                std::cout << "Would you like to keep writing this command (y/n)? ";
+                getline(std::cin, KeepWriting);
+
+                //Convert KeepWriting to upper case.
+                for (int i = 0; i < KeepWriting.size(); i++) {
+                    KeepWriting[i] = toupper(KeepWriting[i]);
+
+                }
+
+                if (KeepWriting == "Y" || KeepWriting == "YES") {
+                    OldCommand = command;
+
+                } else if (KeepWriting == "N" || KeepWriting == "NO") {
+                    OldCommand = "";
+
+                } else {
+                    KeepWriting = "";
+
+                }
+            }
+
+            command = "";
+            KeepWriting = "";
+
+        }
+
         //Input prompt.
         std::cout << ">>>";
 
+        //If there's an old command we need to write, do it now.
+        if (OldCommand != "") {
+            std::cout << OldCommand;
+
+        }
+
         Logger.Debug("main(): Waiting for user input...");
         getline(std::cin, command);
+
+        //If there's an old command, combine it with whatever we typed here.
+        if (OldCommand != "") {
+            command = OldCommand+command;
+
+        }
 
         //It's possible that at this point we have lost the connection and failed to reconnect/reconnected, so check.
         if (Plug.HandlerHasExited()) {
@@ -161,7 +206,7 @@ int main(int argc, char* argv[])
             exit(1);
 
         } else if (Plug.JustReconnected()) {
-            //We just reconnected. Forget anything the user had been typing and go back to the start of the loop.
+            //We just reconnected. Go back to the start of the loop.
             continue;
 
         }
@@ -266,6 +311,11 @@ int main(int argc, char* argv[])
             UserInput.pop_front();
 
         }
+
+        //Reset command to "".
+        command = "";
+        OldCommand = "";
+
     }
 
     //Exit if we broke out of the loop.

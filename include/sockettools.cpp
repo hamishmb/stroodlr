@@ -195,6 +195,9 @@ void Sockets::Handler(Sockets* Ptr) {
             Ptr->Reset();
 
             //Wait for the socket to reconnect or we're requested to exit.
+            //Wait for 2 seconds first.
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+
             Ptr->CreateAndConnect(Ptr);
 
             //If reconnection was successful, set flag and tell user.
@@ -202,7 +205,7 @@ void Sockets::Handler(Sockets* Ptr) {
                 Ptr->Reconnected = true;
 
                 if (Ptr->Verbose) {
-                    std::cout << "Reconnected to peer." << std::endl << std::endl;
+                    std::cerr << "Reconnected to peer." << std::endl << "Press ENTER to continue." << std::endl;
 
                 }
             }
