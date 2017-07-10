@@ -19,6 +19,7 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <queue>
 #include <vector>
 #include <boost/asio.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 #include <thread>
 #include <stdexcept>
@@ -38,18 +39,21 @@ extern Logging Logger;
 //Define Sockets' functions.
 //---------- Setup Functions ----------
 void Sockets::SetPortNumber(const int& PortNo) {
+    Logger.Debug("Socket Tools: Sockets::SetPortNumber(): Setting PortNumber to "+std::to_string(PortNo)+"...");
     PortNumber = PortNo;
 
 }
 
 //Only useful when creating a plug, rather than a socket.
 void Sockets::SetServerAddress(const string& ServerAdd) {
+    Logger.Debug("Socket Tools: Sockets::SetServerAddress(): Setting ServerAddress to "+ServerAdd+"...");
     ServerAddress = ServerAdd;
 
 }
 
 void Sockets::SetConsoleOutput(const bool State) {
-    //Can tell us not to output any message to console (used in server).
+    //Can tell us not to output any messages to console (used in server).
+    Logger.Debug("Socket Tools: Sockets::SetConsoleOutput(): Setting Verbose to "+boost::lexical_cast<string>(State)+"...");
     Verbose = State;
 
 }
@@ -62,10 +66,12 @@ void Sockets::StartHandler() {
     HandlerShouldExit = false;
     HandlerExited = false;
 
-    if (Type == "Plug" || Type == "Socket") { Type = Type;
+    if (Type == "Plug" || Type == "Socket") {
+        Logger.Debug("Socket Tools: Sockets::StartHandler(): Check passed, starting handler...");
         HandlerThread = std::thread(Handler, this);
 
     } else {
+        Logger.Debug("Socket Tools: Sockets::StartHandler(): Type isn't set correctly! Throwing runtime_error...");
         throw std::runtime_error("Type not set correctly");
 
     }
@@ -98,11 +104,15 @@ bool Sockets::HandlerHasExited() {
 }
 //---------- Controller Functions ----------
 void Sockets::RequestHandlerExit() {
+    Logger.Debug("Socket Tools: Sockets::RequestHandlerExit(): Requesting handler to exit...");
     HandlerShouldExit = true;
 
 }
 
 void Sockets::Reset() {
+    //Resets the socket to the default state.
+    Logger.Debug("Socket Tools: Sockets::Reset(): Resetting socket...");
+
     //Variables for tracking status of the other thread.
     ReadyForTransmission = false;
     Reconnected = false;
@@ -120,6 +130,7 @@ void Sockets::Reset() {
     io_service->stop();
     io_service = nullptr;
 
+    Logger.Debug("Socket Tools: Sockets::Reset(): Done! Socket is now in its default state...");
 }
 
 //---------- Handler Thread & Functions ----------
@@ -156,6 +167,7 @@ void Sockets::CreateAndConnect(Sockets* Ptr) {
         }
 
         //Make the handler exit.
+        Logger.Debug("Socket Tools: Sockets::CreateAndConnect(): Asking handler to exit...");
         Ptr->HandlerShouldExit = true;
 
         return;
@@ -186,22 +198,27 @@ void Sockets::Handler(Sockets* Ptr) {
 
         //Check if the peer left.
         if (ReadResult == -1) {
+            Logger.Debug("Socket Tools: Sockets::Handler(): Lost connection to peer. Attempting to reconnect...");
+
             if (Ptr->Verbose) {
                 std::cout << std::endl << std::endl << "Lost connection to peer. Reconnecting..." << std::endl;
 
             }
 
             //Reset the socket. Also sets the tracker.
+            Logger.Debug("Socket Tools: Sockets::Handler(): Resetting socket...");
             Ptr->Reset();
 
             //Wait for the socket to reconnect or we're requested to exit.
             //Wait for 2 seconds first.
             std::this_thread::sleep_for(std::chrono::milliseconds(2000));
 
+            Logger.Debug("Socket Tools: Sockets::Handler(): Recreating and attempting to reconnect the socket...");
             Ptr->CreateAndConnect(Ptr);
 
             //If reconnection was successful, set flag and tell user.
             if (!Ptr->HandlerShouldExit) {
+                Logger.Debug("Socket Tools: Sockets::Handler(): Success! Telling user and re-entering main loop...");
                 Ptr->Reconnected = true;
 
                 if (Ptr->Verbose) {
@@ -213,6 +230,7 @@ void Sockets::Handler(Sockets* Ptr) {
     }
 
     //Flag that we've exited.
+    Logger.Debug("Socket Tools: Sockets::Handler(): Exiting as per the request...");
     Ptr->HandlerExited = true;
 
     //Deregister signal handler, so we can exit if we get stuck while connecting again.
@@ -275,6 +293,7 @@ void Sockets::ConnectSocket() {
 //--------- Read/Write Functions ----------
 void Sockets::Write(vector<char> Msg) {
     //Pushes a message to the outgoing message queue so it can be written later by the handler thread.
+    Logger.Debug("Socket Tools: Sockets::Write(): Pushing "+ConvertToString(Msg)+" to OutgoingQueue...");
     OutgoingQueue.push(Msg);
 
 }
@@ -304,6 +323,7 @@ bool Sockets::HasPendingData() {
 
 vector<char> Sockets::Read() {
     //Returns the item at the front of IncomingQueue.
+    Logger.Debug("Socket Tools: Sockets::Read(): Returning front of IncomingQueue..."); 
     vector<char> Temp = IncomingQueue.front();
 
     return Temp;
@@ -313,6 +333,7 @@ vector<char> Sockets::Read() {
 void Sockets::Pop() {
     //Clears the front element from IncomingQueue. Prevents crash also if the queue is empty.
     if (!IncomingQueue.empty()) {
+        Logger.Debug("Socket Tools: Sockets::Pop(): Clearing front element of IncomingQueue...");
         IncomingQueue.pop();
 
     }
@@ -335,20 +356,26 @@ int Sockets::SendAnyPendingMessages() {
         }
 
         //Write the data.
+        Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Sending data...");
         boost::asio::write(*Socket, boost::asio::buffer(OutgoingQueue.front()), Error);
 
-        if (Error == boost::asio::error::eof)
+        if (Error == boost::asio::error::eof) {
+            Logger.Error("Socket Tools: Sockets::SendAnyPendingMessages(): Connection was closed cleanly by the peer...");
             return false; // Connection closed cleanly by peer. *** HANDLE BETTER ***
-
-        else if (Error)
+    
+        } else if (Error) {
+            Logger.Error("Socket Tools: Sockets::SendAnyPendingMessages(): Other error from boost! throwing boost::system::system_error...");
             throw boost::system::system_error(Error); // Some other error.
 
+        }
+
         //Remove last thing from message queue.
+        Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Clearing item at front of OutgoingQueue...");
         OutgoingQueue.pop();  
 
     } catch (std::exception& err) {
+        Logger.Error("Socket Tools: Sockets::SendAnyPendingMessages(): Caught unhandled exception! Error was "+static_cast<string>(err.what())+"...");
         std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
     }
 
     Logger.Debug("Socket Tools: Sockets::SendAnyPendingMessages(): Done.");
@@ -403,16 +430,23 @@ int Sockets::AttemptToReadFromSocket() {
 
         Socket->read_some(boost::asio::buffer(*MyBuffer), Error);
 
-        if (Error == boost::asio::error::eof)
+        if (Error == boost::asio::error::eof) {
+            Logger.Error("Socket Tools: Sockets::AttemptToReadFromSocket(): Socket closed cleanly by peer! Returning -1...");
+
             return -1; // Connection closed cleanly by peer.
 
-        else if (Error)
+        } else if (Error) {
+            Logger.Error("Socket Tools: Sockets::AttemptToReadFromSocket(): Other error from boost! throwing boost::system::system_error...");
             throw boost::system::system_error(Error); // Some other error.
 
+        }
+
         //Remove any remaining "#"s.
+        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Erasing any remaining '#'s from the message...");
         MyBuffer->erase(std::remove(MyBuffer->begin(), MyBuffer->end(), '#'), MyBuffer->end());
 
         //Push to the message queue.
+        Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Pushing message to IncomingQueue...");
         IncomingQueue.push(*MyBuffer);
 
         Logger.Debug("Socket Tools: Sockets::AttemptToReadFromSocket(): Done.");
@@ -420,8 +454,8 @@ int Sockets::AttemptToReadFromSocket() {
         return Result;
 
     } catch (std::exception& err) {
+        Logger.Error("Socket Tools: Sockets::AttemptToReadFromSocket(): Caught unhandled exception! Error was "+static_cast<string>(err.what())+"...");
         std::cerr << "Error: " << err.what() << std::endl;
-        //InMessageQueue.push("Error: "+static_cast<string>(err.what()));
         return -1;
 
     }
@@ -430,6 +464,7 @@ int Sockets::AttemptToReadFromSocket() {
 //---------- Operators ----------
 std::shared_ptr<tcp::socket> Sockets::operator * () {
     //Return the socket.
+    Logger.Info("Socket Tools: Sockets::AttemptToReadFromSocket(): Returning a std::shared_ptr to the socket as requested...");
     return Socket;
 
 }
