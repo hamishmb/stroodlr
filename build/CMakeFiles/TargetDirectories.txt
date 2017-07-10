@@ -1,0 +1,5 @@
+/home/hamish/Programming/Projects/Stroodlr/build/CMakeFiles/edit_cache.dir
+/home/hamish/Programming/Projects/Stroodlr/build/CMakeFiles/StroodlrSharedCode.dir
+/home/hamish/Programming/Projects/Stroodlr/build/CMakeFiles/stroodlrc.dir
+/home/hamish/Programming/Projects/Stroodlr/build/CMakeFiles/rebuild_cache.dir
+/home/hamish/Programming/Projects/Stroodlr/build/CMakeFiles/stroodlrd.dir

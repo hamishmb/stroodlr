@@ -24,12 +24,19 @@ along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 #include <cctype> //Character handling functions.
 #include <signal.h> //POSIX-only. *** Try to find an alternative solution - might not be thread-safe *** 
 #include <stdexcept>
+#include <conio.h>
 
 //Custom headers.
 #include "../include/tools.h"
 #include "../include/loggertools.h"
 #include "../include/clienttools.h"
 #include "../include/sockettools.h"
+
+//Define keys.
+#define UP_KEY 72
+#define DOWN_KEY 80
+#define LEFT_KEY 75
+#define RIGHT_KEY 77
 
 using std::string;
 using std::vector;
@@ -199,6 +206,28 @@ int main(int argc, char* argv[])
         }
 
         Logger.Debug("main(): Waiting for user input...");
+
+        //Handle up key here (Found on Stack Overflow).
+        c = 0;
+
+        switch((c=getch())) {
+            case UP_KEY:
+                cout << endl << "Up" << endl;//key up
+                break;
+            case DOWN_KEY:
+                cout << endl << "Down" << endl;   // key down
+                break;
+            case LEFT_KEY:
+                cout << endl << "Left" << endl;  // key left
+                break;
+            case RIGHT_KEY:
+                cout << endl << "Right" << endl;  // key right
+                break;
+            default:
+                cout << endl << "null" << endl;  // not arrow
+                break;
+        }
+
         getline(std::cin, command);
 
         //If there's an old command, combine it with whatever we typed here.
