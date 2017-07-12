@@ -13,7 +13,7 @@
 #You should have received a copy of the GNU General Public License
 #along with Stroodlr.  If not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.4.1) #Figure out what oldest version to support will be ***
+cmake_minimum_required(VERSION 2.8.12)
 
 #Refuse to build unless we're doing an out-of-source build.
 MACRO(MACRO_ENSURE_OUT_OF_SOURCE_BUILD MSG)
@@ -38,6 +38,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../dist)
 
 #Use the C++11 standard.
 SET(GCC_CXX_COMPILE_FLAGS -std=c++11)
+
 message("-- C++ standard: C++11")
 
 #Accept options.

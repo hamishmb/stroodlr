@@ -244,6 +244,8 @@ int main(int argc, char* argv[])
             Logger.Warning("main(): Invalid input. Asking for more input...");
             std::cout << std::endl << "Invalid input!" << std::endl;
             std::cin.clear();
+            command = "";
+
             continue;
 
         } else if ((splitcommand[0] == "QUIT") || (splitcommand[0] == "Q") || (splitcommand[0] == "EXIT")) {
@@ -285,6 +287,16 @@ int main(int argc, char* argv[])
             ShowHelp();
 
         } else if (splitcommand[0] == "SEND") {
+            //Check if there was actually a message specified.
+            if (command == "SEND") {
+                //Refuse to send it, because there's no message.
+                std::cout << std::endl << "You didn't specify a message to send! Usage: SEND <msg>." << std::endl << std::endl;
+                command = "";
+
+                continue;
+
+            }
+
             //Send a message.
             Logger.Debug("main(): Preparing to send a message...");
 
@@ -310,6 +322,7 @@ int main(int argc, char* argv[])
                 //Refuse to send it.
                 Logger.Error("main(): Won't send control message PEERGOODBYE. Warning user...");
                 std::cout << std::endl << "You cannot send control messages." << std::endl << std::endl;
+                command = "";
 
                 continue;
 
